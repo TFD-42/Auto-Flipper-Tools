@@ -1,0 +1,15 @@
+# Auto-Flipper-Tools Requirements
+# Python 3.8+
+
+# No external dependencies required for core functionality
+# Ollama is optional and must be installed separately
+
+# Development dependencies (optional)
+# pytest>=7.0.0
+# pytest-cov>=4.0.0
+# black>=23.0.0
+# pylint>=2.15.0
+# flake8>=6.0.0
+# mypy>=0.990
+# safety>=2.3.0
+# bandit>=1.7.4
