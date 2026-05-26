@@ -7,12 +7,14 @@ Pass 2: deep Ollama — re-reads EVERY file (150 lines min) one by one through
          Ollama to get precise per-file classification, then majority-votes
          each bundle/script into the correct topic.  Slow but accurate.
 """
+import argparse
 import hashlib
 import logging
 import os
 import shutil
 import subprocess
 import sys
+import zipfile
 from pathlib import Path
 from typing import Optional
 
@@ -487,6 +489,74 @@ def pass2_refine(output_root: Path, stats: Stats):
     logger.info(f"Pass 2 done — {stats.refined} items reclassified")
 
 
+# ─── GitHub repo downloading ────────────────────────────────────────────────
+
+def download_repos_from_urls(url_file: Path, download_dir: Path) -> Path:
+    """Download all GitHub repos listed in url_file into download_dir."""
+    try:
+        import requests as req
+    except ImportError:
+        logger.error("requests library required for --urls mode: pip install requests")
+        sys.exit(1)
+
+    urls = [
+        line.strip()
+        for line in url_file.read_text().splitlines()
+        if line.strip() and not line.strip().startswith("#")
+    ]
+    logger.info(f"Found {len(urls)} URLs in {url_file}")
+    download_dir.mkdir(parents=True, exist_ok=True)
+
+    success = 0
+    for i, url in enumerate(urls, 1):
+        url = url.rstrip("/")
+        parts = url.split("/")
+        if len(parts) < 5:
+            logger.warning(f"[{i}/{len(urls)}] Skipping invalid URL: {url}")
+            continue
+
+        owner, repo = parts[-2], parts[-1].replace(".git", "")
+        repo_dest = download_dir / repo
+        if repo_dest.exists():
+            logger.info(f"[{i}/{len(urls)}] Already exists: {repo}")
+            success += 1
+            continue
+
+        zip_url = f"https://github.com/{owner}/{repo}/archive/refs/heads/main.zip"
+        zip_path = download_dir / f"{repo}.zip"
+
+        logger.info(f"[{i}/{len(urls)}] Downloading {owner}/{repo} ...")
+        try:
+            resp = req.get(zip_url, stream=True, timeout=60)
+            if resp.status_code == 404:
+                zip_url = f"https://github.com/{owner}/{repo}/archive/refs/heads/master.zip"
+                resp = req.get(zip_url, stream=True, timeout=60)
+            resp.raise_for_status()
+
+            with open(zip_path, "wb") as f:
+                for chunk in resp.iter_content(8192):
+                    if chunk:
+                        f.write(chunk)
+
+            with zipfile.ZipFile(zip_path, "r") as zf:
+                zf.extractall(download_dir)
+
+            for extracted in download_dir.iterdir():
+                if extracted.is_dir() and extracted.name.startswith(f"{repo}-"):
+                    extracted.rename(repo_dest)
+                    break
+
+            zip_path.unlink(missing_ok=True)
+            logger.info(f"  -> {repo_dest.name}/")
+            success += 1
+        except Exception as e:
+            logger.error(f"  Failed: {e}")
+            zip_path.unlink(missing_ok=True)
+
+    logger.info(f"Download complete: {success}/{len(urls)} repos")
+    return download_dir
+
+
 # ─── Entry point ─────────────────────────────────────────────────────────────
 
 def setup_logging(log_path: Path):
@@ -497,16 +567,7 @@ def setup_logging(log_path: Path):
     )
 
 
-def main() -> int:
-    if len(sys.argv) != 2:
-        print("Usage: python classify_badusb.py <directory>")
-        return 1
-
-    root_dir = Path(sys.argv[1]).resolve()
-    if not root_dir.is_dir():
-        print(f"Error: {root_dir} is not a valid directory")
-        return 1
-
+def run_classifier(root_dir: Path) -> int:
     output_root = root_dir / "classified_badusb"
     if output_root.exists():
         shutil.rmtree(output_root)
@@ -517,11 +578,7 @@ def main() -> int:
     setup_logging(log_path)
 
     stats = Stats()
-
-    # Pass 1: fast keyword + short Ollama
     pass1_classify(root_dir, output_root, stats)
-
-    # Pass 2: deep Ollama — every file, 150 lines minimum
     pass2_refine(output_root, stats)
 
     logger.info(
@@ -531,6 +588,51 @@ def main() -> int:
     )
     print(f"\nLog: {log_path}")
     return 0
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(
+        description="BadUSB Classifier — deep recursive, bundle-aware, dedup, two-pass AI",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  # Classify an existing directory of scripts
+  python classify_badusb.py /path/to/scripts
+
+  # Download repos from url list, then classify
+  python classify_badusb.py --urls url.txt
+
+  # Download to a specific directory, then classify
+  python classify_badusb.py --urls url.txt --output /tmp/badusb_repos
+        """,
+    )
+    parser.add_argument("directory", nargs="?", help="Directory to classify")
+    parser.add_argument("--urls", metavar="FILE", help="Download repos from URL list (one URL per line), then classify")
+    parser.add_argument("--output", "-o", metavar="DIR", help="Download directory (default: ./badusb_repos)")
+
+    args = parser.parse_args()
+
+    if args.urls:
+        url_file = Path(args.urls).resolve()
+        if not url_file.is_file():
+            print(f"Error: URL file not found: {url_file}")
+            return 1
+        download_dir = Path(args.output).resolve() if args.output else Path("badusb_repos").resolve()
+        log_path = download_dir / "download.log"
+        download_dir.mkdir(parents=True, exist_ok=True)
+        setup_logging(log_path)
+        download_repos_from_urls(url_file, download_dir)
+        return run_classifier(download_dir)
+
+    if args.directory:
+        root_dir = Path(args.directory).resolve()
+        if not root_dir.is_dir():
+            print(f"Error: {root_dir} is not a valid directory")
+            return 1
+        return run_classifier(root_dir)
+
+    parser.print_help()
+    return 1
 
 
 if __name__ == "__main__":

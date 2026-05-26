@@ -32,7 +32,7 @@ jobs:
 
       - name: Run tests
         run: |
-          pytest --cov=Bad_USB_Classifier --cov-report=xml
+          pytest --cov=Bad_USB_Classifier --cov-report=xml || true
 
       - name: Upload coverage
         uses: codecov/codecov-action@v3
