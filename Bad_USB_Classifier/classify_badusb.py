@@ -1,4 +1,12 @@
 #!/usr/bin/env python3
+"""
+BadUSB Classifier — deep recursive scanner with multi-file payload bundle detection.
+
+Handles both standalone Ducky Scripts and full attack bundles where a directory
+contains the main script alongside helper modules (.ps1, .sh, .bat, .py),
+binary payloads (.bin, .exe), and data assets (.wav, .png, .json, .xml, .csv).
+When a bundle is detected the entire directory is copied as a unit.
+"""
 import logging
 import os
 import shutil
@@ -9,6 +17,7 @@ from typing import Optional
 
 # === CONFIGURATION ===
 OLLAMA_MODEL = "qwen2.5:3b"
+
 VALID_KEYWORDS = {
     "STRING", "DELAY", "ENTER", "REM", "HOLD", "RELEASE", "GUI", "ALT", "CTRL",
     "SHIFT", "TAB", "BACKSPACE", "ESC", "SPACE", "CAPSLOCK", "NUMLOCK", "SCROLLLOCK",
@@ -27,14 +36,24 @@ TOPICS = [
 ]
 
 UNASSIGNED_DIR = "unassigned"
-SUPPORTED_EXTENSIONS = {".txt", ".duck", ".ds"}
-IGNORED_FILENAMES = {"readme.md"}
+
+DUCKY_EXTENSIONS = {".txt", ".duck", ".ds"}
+HELPER_EXTENSIONS = {".ps1", ".sh", ".bat", ".cmd", ".py", ".vbs", ".rb", ".pl"}
+PAYLOAD_EXTENSIONS = {".bin", ".exe", ".dll", ".msi", ".jar", ".apk"}
+DATA_EXTENSIONS = {
+    ".wav", ".mp3", ".png", ".jpg", ".jpeg", ".gif", ".bmp", ".svg",
+    ".json", ".xml", ".csv", ".dat", ".cfg", ".ini", ".yaml", ".yml",
+    ".html", ".htm", ".css", ".js",
+}
+SKIP_EXTENSIONS = {".zip", ".gz", ".tar", ".7z", ".rar"}
+SKIP_FILENAMES = {"readme.md", "license", "license.md", "licence", ".ds_store", ".gitignore", ".gitmodules"}
 
 logger = logging.getLogger(__name__)
 
 
+# ─── Ducky Script detection ───────────────────────────────────────────────────
+
 def is_ducky_script(content: str) -> bool:
-    """Verify presence of valid Ducky Script keywords."""
     lines = content.upper().splitlines()
     for line in lines:
         stripped = line.lstrip()
@@ -43,106 +62,226 @@ def is_ducky_script(content: str) -> bool:
     return False
 
 
+def read_text_safe(path: Path) -> Optional[str]:
+    try:
+        return path.read_text(encoding="utf-8", errors="ignore")
+    except OSError:
+        return None
+
+
+# ─── Topic classification ─────────────────────────────────────────────────────
+
+def classify_content(content: str) -> str:
+    """Return a topic for the given script content (always returns something)."""
+    return (
+        extract_topic_from_content(content)
+        or ask_ollama_for_topic(content)
+        or UNASSIGNED_DIR
+    )
+
+
 def extract_topic_from_content(content: str) -> Optional[str]:
-    """Extract topic from content by keyword matching."""
-    lower_content = content.lower()
+    lower = content.lower()
     for topic in TOPICS:
-        if topic.lower() in lower_content:
-            logger.debug(f"Found topic '{topic}' via keyword match")
+        if topic.lower() in lower:
             return topic
     return None
 
 
 def ask_ollama_for_topic(content: str) -> Optional[str]:
-    """Query Ollama for topic classification."""
-    prompt = f"""You are a BadUSB script expert. Classify this Ducky Script:
-
-{content[:2000]}
-
-Categories: {', '.join(TOPICS)}
-
-Respond with ONLY the exact category name or "unknown"."""
-    
+    prompt = (
+        "You are a BadUSB script expert. Classify this Ducky Script:\n\n"
+        f"{content[:2000]}\n\n"
+        f"Categories: {', '.join(TOPICS)}\n\n"
+        'Respond with ONLY the exact category name or "unknown".'
+    )
     try:
         result = subprocess.run(
             ["ollama", "run", OLLAMA_MODEL],
-            input=prompt,
-            capture_output=True,
-            text=True,
-            timeout=30
+            input=prompt, capture_output=True, text=True, timeout=30,
         )
         answer = result.stdout.strip().lower()
-        
         for topic in TOPICS:
             if topic.lower() == answer:
                 logger.info(f"Ollama classified as '{topic}'")
                 return topic
-        
-        logger.warning(f"Ollama returned unknown category: {answer}")
+        logger.warning(f"Ollama returned unrecognised answer: {answer!r}")
         return None
     except subprocess.TimeoutExpired:
-        logger.error("Ollama request timed out")
-        return None
+        logger.error("Ollama timed out")
     except FileNotFoundError:
-        logger.error("Ollama not found - ensure it's installed and in PATH")
-        return None
+        logger.error("Ollama not found — install it or remove from PATH")
     except Exception as e:
         logger.error(f"Ollama error: {e}")
-        return None
+    return None
 
 
-def get_unique_path(dest_path: Path) -> Path:
-    """Generate unique filename if destination exists."""
-    if not dest_path.exists():
-        return dest_path
-    
-    base, ext = dest_path.stem, dest_path.suffix
-    counter = 1
+# ─── Bundle detection ─────────────────────────────────────────────────────────
+
+def find_ducky_scripts_in(directory: Path) -> list[Path]:
+    """Return every file in *directory* (non-recursive) that is a Ducky Script."""
+    scripts = []
+    for f in directory.iterdir():
+        if not f.is_file():
+            continue
+        if f.suffix.lower() not in DUCKY_EXTENSIONS:
+            continue
+        content = read_text_safe(f)
+        if content and is_ducky_script(content):
+            scripts.append(f)
+    return scripts
+
+
+def has_companion_files(directory: Path) -> bool:
+    """True when the directory holds helper scripts, binaries, or data assets
+    alongside one or more Ducky Scripts — i.e. it is a multi-file payload bundle."""
+    dominated = HELPER_EXTENSIONS | PAYLOAD_EXTENSIONS | DATA_EXTENSIONS
+    for f in directory.iterdir():
+        if f.is_file() and f.suffix.lower() in dominated:
+            return True
+    for child in directory.iterdir():
+        if child.is_dir():
+            return True
+    return False
+
+
+def collect_combined_content(directory: Path, ducky_files: list[Path]) -> str:
+    """Merge all Ducky Scripts + readable helpers into one blob for topic detection."""
+    parts: list[str] = []
+    for f in ducky_files:
+        c = read_text_safe(f)
+        if c:
+            parts.append(c)
+    for f in sorted(directory.rglob("*")):
+        if f in ducky_files or not f.is_file():
+            continue
+        if f.suffix.lower() in HELPER_EXTENSIONS | {".txt"}:
+            c = read_text_safe(f)
+            if c:
+                parts.append(c)
+    return "\n".join(parts)
+
+
+# ─── Unique-path helper ──────────────────────────────────────────────────────
+
+def unique_dest(dest: Path) -> Path:
+    if not dest.exists():
+        return dest
+    stem, suffix = dest.stem, dest.suffix
+    i = 1
     while True:
-        new_path = dest_path.parent / f"{base}_{counter}{ext}"
-        if not new_path.exists():
-            return new_path
-        counter += 1
+        candidate = dest.parent / f"{stem}_{i}{suffix}"
+        if not candidate.exists():
+            return candidate
+        i += 1
 
 
-def process_file(file_path: Path, root_output_dir: Path) -> bool:
-    """Process file: validate, classify, move. Returns True if successful."""
-    try:
-        with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
-            content = f.read()
-    except OSError as e:
-        logger.error(f"Cannot read {file_path}: {e}")
-        return False
+def unique_dir(dest: Path) -> Path:
+    if not dest.exists():
+        return dest
+    i = 1
+    while True:
+        candidate = dest.parent / f"{dest.name}_{i}"
+        if not candidate.exists():
+            return candidate
+        i += 1
 
-    if not is_ducky_script(content):
-        logger.debug(f"Skipped (not Ducky Script): {file_path}")
-        return False
 
-    topic = extract_topic_from_content(content) or ask_ollama_for_topic(content) or UNASSIGNED_DIR
+# ─── Core processing ─────────────────────────────────────────────────────────
 
-    dest_dir = root_output_dir / topic
+class Stats:
+    def __init__(self):
+        self.bundles = 0
+        self.singles = 0
+        self.skipped = 0
+        self.cleaned = 0
+
+
+def process_bundle(directory: Path, ducky_files: list[Path], output_root: Path, stats: Stats):
+    """Copy the entire payload directory as a bundle into the right topic folder."""
+    combined = collect_combined_content(directory, ducky_files)
+    topic = classify_content(combined)
+    dest_dir = output_root / topic
     dest_dir.mkdir(parents=True, exist_ok=True)
-    
-    dest_path = get_unique_path(dest_dir / file_path.name)
-    
-    try:
-        shutil.move(str(file_path), str(dest_path))
-        logger.info(f"Moved {file_path.name} -> {topic}/")
-        return True
-    except OSError as e:
-        logger.error(f"Failed to move {file_path}: {e}")
-        return False
+    bundle_dest = unique_dir(dest_dir / directory.name)
+    shutil.copytree(str(directory), str(bundle_dest))
+    scripts = ", ".join(f.name for f in ducky_files)
+    logger.info(f"[BUNDLE] {directory.name}/ ({scripts}) -> {topic}/{bundle_dest.name}/")
+    stats.bundles += 1
 
 
-def setup_logging(log_path: Path) -> None:
-    """Configure logging to file and console."""
+def process_single(file_path: Path, output_root: Path, stats: Stats):
+    """Copy a standalone Ducky Script into the right topic folder."""
+    content = read_text_safe(file_path)
+    if not content:
+        return
+    topic = classify_content(content)
+    dest_dir = output_root / topic
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    dest = unique_dest(dest_dir / file_path.name)
+    shutil.copy2(str(file_path), str(dest))
+    logger.info(f"[SINGLE] {file_path.name} -> {topic}/")
+    stats.singles += 1
+
+
+def should_skip_dir(name: str) -> bool:
+    low = name.lower()
+    return low.startswith(".") or low in {"__pycache__", "node_modules", "assets"}
+
+
+def walk_and_classify(root_dir: Path, output_root: Path, stats: Stats):
+    """Deep recursive walk.  At each directory decide: bundle, individual files, or recurse."""
+    handled_dirs: set[Path] = set()
+
+    for current_dir, subdirs, files in os.walk(root_dir, topdown=True):
+        current = Path(current_dir)
+
+        if current == output_root or output_root in current.parents:
+            subdirs.clear()
+            continue
+        if current in handled_dirs:
+            subdirs.clear()
+            continue
+        if should_skip_dir(current.name) and current != root_dir:
+            subdirs.clear()
+            continue
+
+        ducky_files = find_ducky_scripts_in(current)
+
+        if ducky_files and has_companion_files(current):
+            process_bundle(current, ducky_files, output_root, stats)
+            # mark all descendants as handled so walk skips them
+            for child in current.rglob("*"):
+                if child.is_dir():
+                    handled_dirs.add(child)
+            subdirs.clear()
+            continue
+
+        for f in files:
+            fp = current / f
+            if fp.name.lower() in SKIP_FILENAMES:
+                stats.cleaned += 1
+                continue
+            if fp.suffix.lower() in SKIP_EXTENSIONS:
+                stats.skipped += 1
+                continue
+            if fp.suffix.lower() not in DUCKY_EXTENSIONS:
+                stats.skipped += 1
+                continue
+            content = read_text_safe(fp)
+            if content and is_ducky_script(content):
+                process_single(fp, output_root, stats)
+            else:
+                stats.skipped += 1
+
+
+# ─── Entry point ──────────────────────────────────────────────────────────────
+
+def setup_logging(log_path: Path):
     logging.basicConfig(
         level=logging.INFO,
-        format="%(asctime)s - %(levelname)s - %(message)s",
-        handlers=[
-            logging.FileHandler(log_path),
-            logging.StreamHandler(sys.stdout)
-        ]
+        format="%(asctime)s  %(levelname)-7s  %(message)s",
+        handlers=[logging.FileHandler(log_path), logging.StreamHandler(sys.stdout)],
     )
 
 
@@ -159,41 +298,17 @@ def main() -> int:
     output_root = root_dir / "classified_badusb"
     output_root.mkdir(exist_ok=True)
     log_path = output_root / "classification.log"
-    
+
     setup_logging(log_path)
-    logger.info(f"Starting classification from {root_dir}")
+    logger.info(f"Scanning {root_dir} (deep recursive, bundle-aware)")
 
-    stats = {"processed": 0, "skipped": 0, "removed": 0}
+    stats = Stats()
+    walk_and_classify(root_dir, output_root, stats)
 
-    for current_dir, subdirs, files in os.walk(root_dir):
-        current_path = Path(current_dir)
-        if output_root in current_path.parents or current_path == output_root:
-            subdirs.clear()
-            continue
-        
-        for filename in files:
-            file_path = current_path / filename
-            
-            if filename.lower() in IGNORED_FILENAMES:
-                try:
-                    file_path.unlink()
-                    logger.info(f"Removed {filename}")
-                    stats["removed"] += 1
-                except OSError as e:
-                    logger.error(f"Cannot remove {file_path}: {e}")
-                continue
-            
-            if file_path.suffix.lower() not in SUPPORTED_EXTENSIONS:
-                logger.debug(f"Skipped (unsupported extension): {file_path.name}")
-                stats["skipped"] += 1
-                continue
-            
-            if process_file(file_path, output_root):
-                stats["processed"] += 1
-            else:
-                stats["skipped"] += 1
-
-    logger.info(f"Complete. Processed: {stats['processed']}, Skipped: {stats['skipped']}, Removed: {stats['removed']}")
+    logger.info(
+        f"Done — bundles: {stats.bundles}, singles: {stats.singles}, "
+        f"skipped: {stats.skipped}, cleaned: {stats.cleaned}"
+    )
     print(f"\nLog: {log_path}")
     return 0
 
