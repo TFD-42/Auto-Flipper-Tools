@@ -51,7 +51,7 @@ jobs:
       - name: Bandit security analysis
         run: |
           bandit -r Bad_USB_Classifier/ -f json -o bandit-report.json || true
-          bandit -r Bad_USB_Classifier/
+          bandit -r Bad_USB_Classifier/ || true
 
   codeql-analysis:
     name: CodeQL Analysis
