@@ -1,0 +1,61 @@
+# Auto-Flipper-Tools — BadUSB Source Repositories
+# Add your own URLs below (one per line)
+# Format: https://github.com/author/repo
+# ──────────────────────────────────────────────────
+
+# === BadUSB Payload Collections ===
+https://github.com/I-Am-Jakoby/Flipper-Zero-BadUSB
+https://github.com/aleff-github/my-flipper-shits
+https://github.com/FalsePhilosopher/badusb
+https://github.com/UNC0V3R3D/Flipper_Zero-BadUsb
+https://github.com/Kavitate/FlipperZeroBadUSB
+https://github.com/SeenKid/flipper-zero-bad-usb
+https://github.com/RamtinHaf/Flipper-Zero-Bad-USB
+https://github.com/grugnoymeme/flipperzero-badUSB
+https://github.com/DoobTheGoober/BADUSB
+https://github.com/anste5/BADUSBrepo
+https://github.com/anste5/BadUSB-badkb
+https://github.com/hooker01/FlipperZero-Payloads
+https://github.com/dagnazty/Flipper_Zero_Bad_USB
+https://github.com/r3dsh3rl0ck/Flipper-Zero-Bad-USB-Payloads
+https://github.com/ClumsyLulz/Flipper_Zero_Badusb_hack5_payloads
+https://github.com/narstybits/MacOS-DuckyScripts
+https://github.com/zer0dayf/Ghost-Audit
+https://github.com/Offensive-Wireless/Flipper-Zero
+https://github.com/Unknown3613/BruceFlipperScripts
+
+# === Flipper Zero Tools & Utilities ===
+https://github.com/Zarcolio/flipperzero
+https://github.com/descambiado/flipper-purple-team
+https://github.com/D4rkDr4gon/flipper-zero-Utils
+https://github.com/Angrido/Flipper-WiFi-Grabber
+https://github.com/gam3r999/Flipper-Zero-Android
+https://github.com/gam3r999/Flipper-Zero-iOS
+https://github.com/heeeyflo/flipperzero-pin-bypass
+
+# === Awesome Lists & Curated Collections ===
+https://github.com/djsime1/awesome-flipperzero
+https://github.com/anasancho/awesome-flipperzero
+https://github.com/RogueMaster/awesome-flipperzero-withModules
+
+# === Asset Databases (IR, Sub-GHz, NFC) ===
+https://github.com/UberGuidoZ/Flipper
+https://github.com/UberGuidoZ/Flipper-IRDB
+https://github.com/Zero-Sploit/FlipperZero-Subghz-DB
+
+# === Plugin Collections ===
+https://github.com/xMasterX/all-the-plugins
+https://github.com/xMasterX/flipperzero-good-faps
+
+# === Individual Apps ===
+https://github.com/honeer/flipper-base
+https://github.com/SYOP200/Flipper-Zero-Downloads
+https://github.com/i12bp8/TagTinker
+https://github.com/Clawzman/Flipper_ListEM
+https://github.com/jblanked/FlipLibrary
+https://github.com/x0452950/flipper-nfc-toolkit
+https://github.com/TFD-42/Mhz_Localiser
+
+# ──────────────────────────────────────────────────
+# Add your own URLs below:
+#

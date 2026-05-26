@@ -309,12 +309,82 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 See [CHANGELOG.md](CHANGELOG.md) for version history and updates.
 
+## Source Repositories & Credits
+
+This project aggregates, classifies, and organizes BadUSB payloads from the community repositories listed below. Huge thanks to all the original authors for their work and contributions to the Flipper Zero ecosystem.
+
+The full list is also available in [`Bad_USB_Classifier/url.txt`](Bad_USB_Classifier/url.txt) — feel free to add your own URLs!
+
+### BadUSB Payload Authors
+
+| Author | Repository | Description |
+|--------|-----------|-------------|
+| [I-Am-Jakoby](https://github.com/I-Am-Jakoby) | [Flipper-Zero-BadUSB](https://github.com/I-Am-Jakoby/Flipper-Zero-BadUSB) | Extensive BadUSB payload collection |
+| [aleff-github](https://github.com/aleff-github) | [my-flipper-shits](https://github.com/aleff-github/my-flipper-shits) | Flipper Zero scripts and BadUSB payloads |
+| [FalsePhilosopher](https://github.com/FalsePhilosopher) | [badusb](https://github.com/FalsePhilosopher/badusb) | Multi-platform BadUSB scripts |
+| [UNC0V3R3D](https://github.com/UNC0V3R3D) | [Flipper_Zero-BadUsb](https://github.com/UNC0V3R3D/Flipper_Zero-BadUsb) | Flipper Zero BadUSB payloads |
+| [Kavitate](https://github.com/Kavitate) | [FlipperZeroBadUSB](https://github.com/Kavitate/FlipperZeroBadUSB) | BadUSB payload library |
+| [SeenKid](https://github.com/SeenKid) | [flipper-zero-bad-usb](https://github.com/SeenKid/flipper-zero-bad-usb) | BadUSB scripts for Flipper Zero |
+| [RamtinHaf](https://github.com/RamtinHaf) | [Flipper-Zero-Bad-USB](https://github.com/RamtinHaf/Flipper-Zero-Bad-USB) | BadUSB payload collection |
+| [grugnoymeme](https://github.com/grugnoymeme) | [flipperzero-badUSB](https://github.com/grugnoymeme/flipperzero-badUSB) | Flipper Zero BadUSB scripts |
+| [DoobTheGoober](https://github.com/DoobTheGoober) | [BADUSB](https://github.com/DoobTheGoober/BADUSB) | BadUSB payloads |
+| [anste5](https://github.com/anste5) | [BADUSBrepo](https://github.com/anste5/BADUSBrepo) / [BadUSB-badkb](https://github.com/anste5/BadUSB-badkb) | BadUSB and BadKB scripts |
+| [hooker01](https://github.com/hooker01) | [FlipperZero-Payloads](https://github.com/hooker01/FlipperZero-Payloads) | Flipper Zero payloads |
+| [dagnazty](https://github.com/dagnazty) | [Flipper_Zero_Bad_USB](https://github.com/dagnazty/Flipper_Zero_Bad_USB) | BadUSB collection |
+| [r3dsh3rl0ck](https://github.com/r3dsh3rl0ck) | [Flipper-Zero-Bad-USB-Payloads](https://github.com/r3dsh3rl0ck/Flipper-Zero-Bad-USB-Payloads) | Curated BadUSB payloads |
+| [ClumsyLulz](https://github.com/ClumsyLulz) | [Flipper_Zero_Badusb_hack5_payloads](https://github.com/ClumsyLulz/Flipper_Zero_Badusb_hack5_payloads) | Hak5-style BadUSB payloads |
+| [narstybits](https://github.com/narstybits) | [MacOS-DuckyScripts](https://github.com/narstybits/MacOS-DuckyScripts) | macOS-targeted Ducky Scripts |
+| [zer0dayf](https://github.com/zer0dayf) | [Ghost-Audit](https://github.com/zer0dayf/Ghost-Audit) | Ghost Audit security scripts |
+| [Offensive-Wireless](https://github.com/Offensive-Wireless) | [Flipper-Zero](https://github.com/Offensive-Wireless/Flipper-Zero) | Offensive wireless payloads |
+| [Unknown3613](https://github.com/Unknown3613) | [BruceFlipperScripts](https://github.com/Unknown3613/BruceFlipperScripts) | Flipper scripts and payloads |
+
+### Flipper Zero Tools & Utilities
+
+| Author | Repository | Description |
+|--------|-----------|-------------|
+| [Zarcolio](https://github.com/Zarcolio) | [flipperzero](https://github.com/Zarcolio/flipperzero) | Flipper Zero tools and Ducky Scripts |
+| [descambiado](https://github.com/descambiado) | [flipper-purple-team](https://github.com/descambiado/flipper-purple-team) | Purple team payloads |
+| [D4rkDr4gon](https://github.com/D4rkDr4gon) | [flipper-zero-Utils](https://github.com/D4rkDr4gon/flipper-zero-Utils) | Flipper Zero utilities |
+| [Angrido](https://github.com/Angrido) | [Flipper-WiFi-Grabber](https://github.com/Angrido/Flipper-WiFi-Grabber) | WiFi credential grabber |
+| [gam3r999](https://github.com/gam3r999) | [Flipper-Zero-Android](https://github.com/gam3r999/Flipper-Zero-Android) / [Flipper-Zero-iOS](https://github.com/gam3r999/Flipper-Zero-iOS) | Mobile-targeting payloads |
+| [heeeyflo](https://github.com/heeeyflo) | [flipperzero-pin-bypass](https://github.com/heeeyflo/flipperzero-pin-bypass) | PIN bypass scripts |
+
+### Awesome Lists & Curated Collections
+
+| Author | Repository | Description |
+|--------|-----------|-------------|
+| [djsime1](https://github.com/djsime1) | [awesome-flipperzero](https://github.com/djsime1/awesome-flipperzero) | The original Awesome Flipper Zero list |
+| [anasancho](https://github.com/anasancho) | [awesome-flipperzero](https://github.com/anasancho/awesome-flipperzero) | Awesome Flipper Zero fork |
+| [RogueMaster](https://github.com/RogueMaster) | [awesome-flipperzero-withModules](https://github.com/RogueMaster/awesome-flipperzero-withModules) | Extended awesome list with modules |
+
+### Asset Databases & Plugin Collections
+
+| Author | Repository | Description |
+|--------|-----------|-------------|
+| [UberGuidoZ](https://github.com/UberGuidoZ) | [Flipper](https://github.com/UberGuidoZ/Flipper) / [Flipper-IRDB](https://github.com/UberGuidoZ/Flipper-IRDB) | Massive Flipper asset database & IR DB |
+| [Zero-Sploit](https://github.com/Zero-Sploit) | [FlipperZero-Subghz-DB](https://github.com/Zero-Sploit/FlipperZero-Subghz-DB) | Sub-GHz frequency database |
+| [xMasterX](https://github.com/xMasterX) | [all-the-plugins](https://github.com/xMasterX/all-the-plugins) / [flipperzero-good-faps](https://github.com/xMasterX/flipperzero-good-faps) | Unleashed-compatible plugin collections |
+
+### Individual Apps & Tools
+
+| Author | Repository | Description |
+|--------|-----------|-------------|
+| [honeer](https://github.com/honeer) | [flipper-base](https://github.com/honeer/flipper-base) | Flipper base tools |
+| [SYOP200](https://github.com/SYOP200) | [Flipper-Zero-Downloads](https://github.com/SYOP200/Flipper-Zero-Downloads) | Flipper Zero downloads |
+| [i12bp8](https://github.com/i12bp8) | [TagTinker](https://github.com/i12bp8/TagTinker) | NFC tag tools |
+| [Clawzman](https://github.com/Clawzman) | [Flipper_ListEM](https://github.com/Clawzman/Flipper_ListEM) | Flipper listing tool |
+| [jblanked](https://github.com/jblanked) | [FlipLibrary](https://github.com/jblanked/FlipLibrary) | Flipper library app |
+| [x0452950](https://github.com/x0452950) | [flipper-nfc-toolkit](https://github.com/x0452950/flipper-nfc-toolkit) | NFC toolkit |
+| [TFD-42](https://github.com/TFD-42) | [Mhz_Localiser](https://github.com/TFD-42/Mhz_Localiser) | MHz frequency localiser |
+
+> **Want to add your repo?** Fork this project, add your URL to [`Bad_USB_Classifier/url.txt`](Bad_USB_Classifier/url.txt), and open a Pull Request!
+
 ## Disclaimer
 
 This toolkit is intended for authorized security testing, research, and educational purposes only. Users are responsible for legal compliance and obtaining proper authorization before testing security systems.
 
 ---
 
-**Made with 🔧 for security professionals by the community**
+**Made with tools for security professionals by the community**
 
-⭐ If you find this useful, please star the repository!
+If you find this useful, please star the repository!
