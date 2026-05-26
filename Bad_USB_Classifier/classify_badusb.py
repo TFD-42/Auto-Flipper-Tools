@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """
-BadUSB Classifier — deep recursive scanner with multi-file payload bundle detection.
+BadUSB Classifier — deep recursive, bundle-aware, dedup, two-pass AI refinement.
 
-Handles both standalone Ducky Scripts and full attack bundles where a directory
-contains the main script alongside helper modules (.ps1, .sh, .bat, .py),
-binary payloads (.bin, .exe), and data assets (.wav, .png, .json, .xml, .csv).
-When a bundle is detected the entire directory is copied as a unit.
+Pass 1: fast scan — keyword match + short Ollama query, dedup by hash + header.
+Pass 2: deep Ollama — re-reads EVERY file (150 lines min) one by one through
+         Ollama to get precise per-file classification, then majority-votes
+         each bundle/script into the correct topic.  Slow but accurate.
 """
+import hashlib
 import logging
 import os
 import shutil
@@ -17,6 +18,9 @@ from typing import Optional
 
 # === CONFIGURATION ===
 OLLAMA_MODEL = "qwen2.5:3b"
+OLLAMA_TIMEOUT_FAST = 30
+OLLAMA_TIMEOUT_DEEP = 120
+DEEP_MIN_LINES = 150
 
 VALID_KEYWORDS = {
     "STRING", "DELAY", "ENTER", "REM", "HOLD", "RELEASE", "GUI", "ALT", "CTRL",
@@ -34,6 +38,7 @@ TOPICS = [
     "destructive", "Mimikatz", "ransom", "web2Discord", "EmailAndTextMessage",
     "MOAB", "execution", "mobile", "recon"
 ]
+TOPICS_LOWER = {t.lower(): t for t in TOPICS}
 
 UNASSIGNED_DIR = "unassigned"
 
@@ -45,17 +50,64 @@ DATA_EXTENSIONS = {
     ".json", ".xml", ".csv", ".dat", ".cfg", ".ini", ".yaml", ".yml",
     ".html", ".htm", ".css", ".js",
 }
+READABLE_EXTENSIONS = DUCKY_EXTENSIONS | HELPER_EXTENSIONS | {".html", ".htm", ".js", ".css", ".json", ".xml", ".yaml", ".yml"}
 SKIP_EXTENSIONS = {".zip", ".gz", ".tar", ".7z", ".rar"}
-SKIP_FILENAMES = {"readme.md", "license", "license.md", "licence", ".ds_store", ".gitignore", ".gitmodules"}
+SKIP_FILENAMES = {
+    "readme.md", "license", "license.md", "licence", "licence.md",
+    ".ds_store", ".gitignore", ".gitmodules", "contributing.md",
+    "changelog.md", "code_of_conduct.md",
+}
+
+HEADER_LINES = 5
 
 logger = logging.getLogger(__name__)
 
 
-# ─── Ducky Script detection ───────────────────────────────────────────────────
+# ─── Deduplication ───────────────────────────────────────────────────────────
+
+class DedupIndex:
+    def __init__(self):
+        self.full_hashes: set[str] = set()
+        self.header_fps: set[str] = set()
+        self.dupes_hash = 0
+        self.dupes_header = 0
+
+    def _content_hash(self, content: str) -> str:
+        return hashlib.sha256(content.encode("utf-8", errors="replace")).hexdigest()
+
+    def _header_fingerprint(self, content: str) -> str:
+        code_lines: list[str] = []
+        for raw in content.splitlines():
+            stripped = raw.strip()
+            if not stripped:
+                continue
+            upper = stripped.upper()
+            if upper.startswith("REM") and any(k in upper for k in ("AUTHOR", "CREDIT", "BY ", "NAME")):
+                continue
+            code_lines.append(stripped)
+            if len(code_lines) >= HEADER_LINES:
+                break
+        blob = "\n".join(code_lines)
+        return hashlib.sha256(blob.encode("utf-8", errors="replace")).hexdigest()
+
+    def is_duplicate(self, content: str) -> bool:
+        fh = self._content_hash(content)
+        if fh in self.full_hashes:
+            self.dupes_hash += 1
+            return True
+        hp = self._header_fingerprint(content)
+        if hp in self.header_fps:
+            self.dupes_header += 1
+            return True
+        self.full_hashes.add(fh)
+        self.header_fps.add(hp)
+        return False
+
+
+# ─── Ducky Script detection ─────────────────────────────────────────────────
 
 def is_ducky_script(content: str) -> bool:
-    lines = content.upper().splitlines()
-    for line in lines:
+    for line in content.upper().splitlines():
         stripped = line.lstrip()
         if stripped and any(stripped.startswith(kw) for kw in VALID_KEYWORDS):
             return True
@@ -69,13 +121,12 @@ def read_text_safe(path: Path) -> Optional[str]:
         return None
 
 
-# ─── Topic classification ─────────────────────────────────────────────────────
+# ─── Topic classification — FAST (pass 1) ───────────────────────────────────
 
 def classify_content(content: str) -> str:
-    """Return a topic for the given script content (always returns something)."""
     return (
         extract_topic_from_content(content)
-        or ask_ollama_for_topic(content)
+        or ask_ollama_fast(content)
         or UNASSIGNED_DIR
     )
 
@@ -88,43 +139,90 @@ def extract_topic_from_content(content: str) -> Optional[str]:
     return None
 
 
-def ask_ollama_for_topic(content: str) -> Optional[str]:
+def ask_ollama_fast(content: str) -> Optional[str]:
     prompt = (
         "You are a BadUSB script expert. Classify this Ducky Script:\n\n"
         f"{content[:2000]}\n\n"
         f"Categories: {', '.join(TOPICS)}\n\n"
         'Respond with ONLY the exact category name or "unknown".'
     )
+    return _ollama_query(prompt, OLLAMA_TIMEOUT_FAST)
+
+
+# ─── Topic classification — DEEP (pass 2) ───────────────────────────────────
+
+def ask_ollama_deep(content: str, filename: str) -> Optional[str]:
+    """Send at least 150 lines of actual content to Ollama for precise classification."""
+    lines = content.splitlines()
+    chunk = "\n".join(lines[:max(DEEP_MIN_LINES, len(lines))])
+
+    prompt = f"""You are a security expert specializing in BadUSB, Ducky Script, and HID attacks.
+
+Analyze the following file carefully. Read every line of code.
+
+FILENAME: {filename}
+
+--- FILE CONTENT START ---
+{chunk}
+--- FILE CONTENT END ---
+
+Based on the FULL content above, what is the primary purpose / attack category of this script?
+
+Choose EXACTLY ONE category from this list:
+{', '.join(TOPICS)}
+
+Rules:
+- If the script steals passwords, WiFi keys, browser data, cookies → credentials or exfiltration
+- If the script opens a reverse shell or remote connection → ReverseShell or remote_access
+- If the script sends data to Discord → Chrome2Discord or web2Discord
+- If the script sends data to Telegram → Telegram
+- If the script is a joke, wallpaper change, sound prank → prank
+- If the script deletes files or causes damage → destructive
+- If the script does reconnaissance or system info gathering → recon
+- If the script runs Mimikatz or credential dumping → Mimikatz
+- If the script demands payment or encrypts files → ransom
+- If the script targets mobile devices (Android/iOS) → mobile
+- If the script sends phishing pages or fake login → phishing
+- If the script targets macOS specifically, still classify by PURPOSE not OS
+- If none match clearly → general
+
+Respond with ONLY the exact category name, nothing else."""
+
+    return _ollama_query(prompt, OLLAMA_TIMEOUT_DEEP)
+
+
+def _ollama_query(prompt: str, timeout: int) -> Optional[str]:
     try:
         result = subprocess.run(
             ["ollama", "run", OLLAMA_MODEL],
-            input=prompt, capture_output=True, text=True, timeout=30,
+            input=prompt, capture_output=True, text=True, timeout=timeout,
         )
-        answer = result.stdout.strip().lower()
+        raw = result.stdout.strip()
+        # try exact match first
+        if raw.lower() in TOPICS_LOWER:
+            topic = TOPICS_LOWER[raw.lower()]
+            return topic
+        # try to find a topic name anywhere in the response
         for topic in TOPICS:
-            if topic.lower() == answer:
-                logger.info(f"Ollama classified as '{topic}'")
+            if topic.lower() in raw.lower():
                 return topic
-        logger.warning(f"Ollama returned unrecognised answer: {answer!r}")
+        logger.warning(f"Ollama unrecognised: {raw!r}")
         return None
     except subprocess.TimeoutExpired:
         logger.error("Ollama timed out")
     except FileNotFoundError:
-        logger.error("Ollama not found — install it or remove from PATH")
+        logger.error("Ollama not found")
     except Exception as e:
         logger.error(f"Ollama error: {e}")
     return None
 
 
-# ─── Bundle detection ─────────────────────────────────────────────────────────
+# ─── Bundle detection ────────────────────────────────────────────────────────
 
 def find_ducky_scripts_in(directory: Path) -> list[Path]:
-    """Return every file in *directory* (non-recursive) that is a Ducky Script."""
     scripts = []
     for f in directory.iterdir():
-        if not f.is_file():
-            continue
-        if f.suffix.lower() not in DUCKY_EXTENSIONS:
+        if not f.is_file() or f.suffix.lower() not in DUCKY_EXTENSIONS:
             continue
         content = read_text_safe(f)
         if content and is_ducky_script(content):
@@ -133,20 +231,17 @@ def find_ducky_scripts_in(directory: Path) -> list[Path]:
 
 
 def has_companion_files(directory: Path) -> bool:
-    """True when the directory holds helper scripts, binaries, or data assets
-    alongside one or more Ducky Scripts — i.e. it is a multi-file payload bundle."""
     dominated = HELPER_EXTENSIONS | PAYLOAD_EXTENSIONS | DATA_EXTENSIONS
     for f in directory.iterdir():
         if f.is_file() and f.suffix.lower() in dominated:
             return True
     for child in directory.iterdir():
-        if child.is_dir():
+        if child.is_dir() and child.name.lower() not in {"assets", "__pycache__", ".git"}:
             return True
     return False
 
 
 def collect_combined_content(directory: Path, ducky_files: list[Path]) -> str:
-    """Merge all Ducky Scripts + readable helpers into one blob for topic detection."""
     parts: list[str] = []
     for f in ducky_files:
         c = read_text_safe(f)
@@ -162,7 +257,7 @@ def collect_combined_content(directory: Path, ducky_files: list[Path]) -> str:
     return "\n".join(parts)
 
 
-# ─── Unique-path helper ──────────────────────────────────────────────────────
+# ─── Path helpers ────────────────────────────────────────────────────────────
 
 def unique_dest(dest: Path) -> Path:
     if not dest.exists():
@@ -187,7 +282,7 @@ def unique_dir(dest: Path) -> Path:
         i += 1
 
 
-# ─── Core processing ─────────────────────────────────────────────────────────
+# ─── Pass 1: fast classification ────────────────────────────────────────────
 
 class Stats:
     def __init__(self):
@@ -195,25 +290,32 @@ class Stats:
         self.singles = 0
         self.skipped = 0
         self.cleaned = 0
+        self.dupes = 0
+        self.refined = 0
 
 
-def process_bundle(directory: Path, ducky_files: list[Path], output_root: Path, stats: Stats):
-    """Copy the entire payload directory as a bundle into the right topic folder."""
+def process_bundle(directory, ducky_files, output_root, dedup, stats):
     combined = collect_combined_content(directory, ducky_files)
+    if dedup.is_duplicate(combined):
+        logger.info(f"[DUPE-BUNDLE] {directory.name}/")
+        stats.dupes += 1
+        return
     topic = classify_content(combined)
     dest_dir = output_root / topic
     dest_dir.mkdir(parents=True, exist_ok=True)
     bundle_dest = unique_dir(dest_dir / directory.name)
     shutil.copytree(str(directory), str(bundle_dest))
-    scripts = ", ".join(f.name for f in ducky_files)
-    logger.info(f"[BUNDLE] {directory.name}/ ({scripts}) -> {topic}/{bundle_dest.name}/")
+    logger.info(f"[BUNDLE] {directory.name}/ -> {topic}/")
     stats.bundles += 1
 
 
-def process_single(file_path: Path, output_root: Path, stats: Stats):
-    """Copy a standalone Ducky Script into the right topic folder."""
+def process_single(file_path, output_root, dedup, stats):
     content = read_text_safe(file_path)
     if not content:
+        return
+    if dedup.is_duplicate(content):
+        logger.info(f"[DUPE] {file_path.name}")
+        stats.dupes += 1
         return
     topic = classify_content(content)
     dest_dir = output_root / topic
@@ -226,16 +328,18 @@ def process_single(file_path: Path, output_root: Path, stats: Stats):
 
 def should_skip_dir(name: str) -> bool:
     low = name.lower()
-    return low.startswith(".") or low in {"__pycache__", "node_modules", "assets"}
+    return low.startswith(".") or low in {
+        "__pycache__", "node_modules", "assets", "classified_badusb",
+    }
 
 
-def walk_and_classify(root_dir: Path, output_root: Path, stats: Stats):
-    """Deep recursive walk.  At each directory decide: bundle, individual files, or recurse."""
+def pass1_classify(root_dir: Path, output_root: Path, stats: Stats):
+    logger.info("═══ PASS 1: fast classification (keyword + short Ollama) ═══")
+    dedup = DedupIndex()
     handled_dirs: set[Path] = set()
 
     for current_dir, subdirs, files in os.walk(root_dir, topdown=True):
         current = Path(current_dir)
-
         if current == output_root or output_root in current.parents:
             subdirs.clear()
             continue
@@ -247,10 +351,8 @@ def walk_and_classify(root_dir: Path, output_root: Path, stats: Stats):
             continue
 
         ducky_files = find_ducky_scripts_in(current)
-
         if ducky_files and has_companion_files(current):
-            process_bundle(current, ducky_files, output_root, stats)
-            # mark all descendants as handled so walk skips them
+            process_bundle(current, ducky_files, output_root, dedup, stats)
             for child in current.rglob("*"):
                 if child.is_dir():
                     handled_dirs.add(child)
@@ -270,12 +372,122 @@ def walk_and_classify(root_dir: Path, output_root: Path, stats: Stats):
                 continue
             content = read_text_safe(fp)
             if content and is_ducky_script(content):
-                process_single(fp, output_root, stats)
+                process_single(fp, output_root, dedup, stats)
             else:
                 stats.skipped += 1
 
+    stats.dupes = dedup.dupes_hash + dedup.dupes_header
+    logger.info(
+        f"Pass 1 done — bundles: {stats.bundles}, singles: {stats.singles}, "
+        f"dupes: {stats.dupes}, skipped: {stats.skipped}"
+    )
 
-# ─── Entry point ──────────────────────────────────────────────────────────────
+
+# ─── Pass 2: deep Ollama refinement — file by file ──────────────────────────
+
+def deep_classify_file(file_path: Path) -> Optional[str]:
+    """Read a file and send it through deep Ollama analysis."""
+    content = read_text_safe(file_path)
+    if not content or len(content.strip()) < 10:
+        return None
+    return ask_ollama_deep(content, file_path.name)
+
+
+def deep_classify_bundle(bundle_dir: Path) -> Optional[str]:
+    """Read every readable file in the bundle through Ollama individually,
+    then majority-vote the topic."""
+    votes: dict[str, int] = {}
+
+    readable_files = []
+    for f in sorted(bundle_dir.rglob("*")):
+        if not f.is_file():
+            continue
+        if f.name.lower() in SKIP_FILENAMES:
+            continue
+        if f.suffix.lower() in READABLE_EXTENSIONS:
+            readable_files.append(f)
+
+    if not readable_files:
+        return None
+
+    for f in readable_files:
+        content = read_text_safe(f)
+        if not content or len(content.strip()) < 10:
+            continue
+        topic = ask_ollama_deep(content, f.name)
+        if topic:
+            votes[topic] = votes.get(topic, 0) + 1
+            logger.info(f"  [DEEP] {f.name} -> {topic}")
+
+    if not votes:
+        return None
+
+    winner = max(votes, key=votes.get)
+    logger.info(f"  [VOTE] {bundle_dir.name}/ -> {winner} (votes: {votes})")
+    return winner
+
+
+def pass2_refine(output_root: Path, stats: Stats):
+    """Re-classify every item in the output using deep Ollama analysis.
+    Each readable file is sent individually with 150+ lines."""
+    logger.info("═══ PASS 2: deep Ollama refinement (file by file, 150 lines min) ═══")
+
+    topic_dirs = sorted([d for d in output_root.iterdir() if d.is_dir()])
+
+    for topic_dir in topic_dirs:
+        current_topic = topic_dir.name
+        logger.info(f"Refining topic: {current_topic}/ ...")
+
+        # ── bundles first ──
+        bundles = sorted([d for d in topic_dir.iterdir() if d.is_dir()])
+        for bundle in bundles:
+            logger.info(f"  Analyzing bundle: {bundle.name}/")
+            new_topic = deep_classify_bundle(bundle)
+
+            if new_topic and new_topic != current_topic:
+                dest_dir = output_root / new_topic
+                dest_dir.mkdir(parents=True, exist_ok=True)
+                dest = unique_dir(dest_dir / bundle.name)
+                shutil.move(str(bundle), str(dest))
+                logger.info(f"  [MOVED] {bundle.name}/: {current_topic} -> {new_topic}")
+                stats.refined += 1
+            elif new_topic:
+                logger.info(f"  [OK] {bundle.name}/ stays in {current_topic}")
+
+        # ── standalone scripts ──
+        scripts = sorted([
+            f for f in topic_dir.iterdir()
+            if f.is_file() and f.suffix.lower() in DUCKY_EXTENSIONS
+        ])
+        for script in scripts:
+            content = read_text_safe(script)
+            if not content or not is_ducky_script(content):
+                continue
+
+            new_topic = ask_ollama_deep(content, script.name)
+            if not new_topic:
+                continue
+
+            if new_topic != current_topic:
+                dest_dir = output_root / new_topic
+                dest_dir.mkdir(parents=True, exist_ok=True)
+                dest = unique_dest(dest_dir / script.name)
+                shutil.move(str(script), str(dest))
+                logger.info(f"  [MOVED] {script.name}: {current_topic} -> {new_topic}")
+                stats.refined += 1
+            else:
+                logger.info(f"  [OK] {script.name} stays in {current_topic}")
+
+    # clean empty dirs
+    for topic_dir in list(output_root.iterdir()):
+        if topic_dir.is_dir() and not any(topic_dir.iterdir()):
+            topic_dir.rmdir()
+            logger.info(f"  [CLEAN] removed empty: {topic_dir.name}/")
+
+    logger.info(f"Pass 2 done — {stats.refined} items reclassified")
+
+
+# ─── Entry point ─────────────────────────────────────────────────────────────
 
 def setup_logging(log_path: Path):
     logging.basicConfig(
@@ -296,18 +508,26 @@ def main() -> int:
         return 1
 
     output_root = root_dir / "classified_badusb"
+    if output_root.exists():
+        shutil.rmtree(output_root)
+        print(f"Cleaned previous output: {output_root}")
     output_root.mkdir(exist_ok=True)
     log_path = output_root / "classification.log"
 
     setup_logging(log_path)
-    logger.info(f"Scanning {root_dir} (deep recursive, bundle-aware)")
 
     stats = Stats()
-    walk_and_classify(root_dir, output_root, stats)
+
+    # Pass 1: fast keyword + short Ollama
+    pass1_classify(root_dir, output_root, stats)
+
+    # Pass 2: deep Ollama — every file, 150 lines minimum
+    pass2_refine(output_root, stats)
 
     logger.info(
-        f"Done — bundles: {stats.bundles}, singles: {stats.singles}, "
-        f"skipped: {stats.skipped}, cleaned: {stats.cleaned}"
+        f"═══ FINAL: bundles={stats.bundles}, singles={stats.singles}, "
+        f"dupes={stats.dupes}, refined={stats.refined}, "
+        f"skipped={stats.skipped}, cleaned={stats.cleaned} ═══"
     )
     print(f"\nLog: {log_path}")
     return 0
