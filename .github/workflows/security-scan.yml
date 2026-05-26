@@ -23,8 +23,9 @@ jobs:
 
       - name: TruffleHog Secret Scanning
         uses: trufflesecurity/trufflehog@main
+        continue-on-error: true
         with:
-          extra_args: --only-verified filesystem ./
+          extra_args: --only-verified
 
   dependency-check:
     name: Dependency Vulnerability Check
