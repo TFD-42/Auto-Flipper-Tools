@@ -8,6 +8,8 @@
 
 ## Overview
 
+<img width="1680" height="720" alt="github_banner_42" src="https://github.com/user-attachments/assets/682f0c0e-cedb-451e-bc45-1c0158a8fccf" />
+
 Auto-Flipper-Tools is a comprehensive suite of automation tools designed for security professionals, researchers, and enthusiasts working with Flipper Zero devices. The toolkit focuses on automated analysis, classification, and preprocessing of security payloads with built-in intelligence for script categorization and validation.
 
 ### Key Use Cases
