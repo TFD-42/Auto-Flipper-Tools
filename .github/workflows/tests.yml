@@ -32,7 +32,7 @@ jobs:
 
       - name: Run tests
         run: |
-          pytest --cov=Bad_USB_Classifier --cov-report=xml || true
+          pytest --cov=Bad_USB_Classifier --cov-report=xml
 
       - name: Upload coverage
         uses: codecov/codecov-action@v3
@@ -74,4 +74,70 @@ jobs:
 
       - name: Test imports
         run: |
-          python -c "import sys; sys.path.insert(0, 'Bad_USB_Classifier'); from classify_badusb import *; print('✓ All imports successful')"
+          python -c "
+          import Bad_USB_Classifier.classify_badusb
+          import Bad_USB_Classifier.payload_setup_agent
+          import Bad_USB_Classifier.ollama_agent
+          import Bad_USB_Classifier.discover_repos
+          import badusb_pipeline
+          print('OK all imports successful')
+          "
+
+  install-script:
+    name: Install script (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Run install.sh (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          AUTO_FLIPPER_HOME="$RUNNER_TEMP/afl-home" bash scripts/install.sh
+          "$RUNNER_TEMP/afl-home/bin/badusb-pipeline" --help
+
+      - name: Run install.ps1 (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $env:AUTO_FLIPPER_HOME = "$env:RUNNER_TEMP\afl-home"
+          .\scripts\install.ps1
+          & "$env:RUNNER_TEMP\afl-home\bin\badusb-pipeline.cmd" --help
+
+      - name: Functional smoke test (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/afl-smoke-src"
+          cat > "$RUNNER_TEMP/afl-smoke-src/a.txt" <<'EOF'
+          REM Category: prank
+          DELAY 500
+          STRING notepad
+          ENTER
+          EOF
+          echo n | "$RUNNER_TEMP/afl-home/bin/badusb-pipeline" "$RUNNER_TEMP/afl-smoke-src" --no-ollama
+          test -f "$RUNNER_TEMP/afl-smoke-src_organized/setup_report.md"
+
+      - name: Functional smoke test (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $srcDir = "$env:RUNNER_TEMP\afl-smoke-src"
+          New-Item -ItemType Directory -Force -Path $srcDir | Out-Null
+          @"
+          REM Category: prank
+          DELAY 500
+          STRING notepad
+          ENTER
+          "@ | Set-Content -Path "$srcDir\a.txt"
+          "n" | & "$env:RUNNER_TEMP\afl-home\bin\badusb-pipeline.cmd" $srcDir --no-ollama
+          if (-not (Test-Path "${srcDir}_organized\setup_report.md")) { throw "setup_report.md missing" }

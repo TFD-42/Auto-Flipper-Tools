@@ -1,0 +1,71 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "auto-flipper-tools"
+version = "1.1.0"
+description = "Automated BadUSB payload classifier and enrichment toolkit for Flipper Zero"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.8"
+authors = [{ name = "TFD-42" }]
+keywords = [
+    "flipper-zero",
+    "badusb",
+    "ducky-script",
+    "rubber-ducky",
+    "security-automation",
+    "payload-classifier",
+    "ollama",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Information Technology",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Security",
+]
+dependencies = ["requests>=2.32.0"]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=24.0.0",
+    "isort>=5.12.0",
+    "flake8>=6.0.0",
+    "mypy>=1.8.0",
+    "types-requests",
+    "bandit>=1.7.4",
+    "safety>=2.3.0",
+]
+build = ["pyinstaller>=6.0.0", "build>=1.0.0"]
+
+[project.urls]
+Homepage = "https://github.com/TFD-42/Auto-Flipper-Tools"
+Repository = "https://github.com/TFD-42/Auto-Flipper-Tools"
+Issues = "https://github.com/TFD-42/Auto-Flipper-Tools/issues"
+Changelog = "https://github.com/TFD-42/Auto-Flipper-Tools/releases"
+
+[project.scripts]
+badusb-pipeline = "badusb_pipeline:main"
+badusb-classify = "Bad_USB_Classifier.classify_badusb:main"
+badusb-setup-agent = "Bad_USB_Classifier.payload_setup_agent:main"
+badusb-discover = "Bad_USB_Classifier.discover_repos:main"
+
+[tool.setuptools]
+py-modules = ["badusb_pipeline"]
+packages = ["Bad_USB_Classifier"]
+
+[tool.isort]
+profile = "black"
+
+[tool.black]
+line-length = 88
