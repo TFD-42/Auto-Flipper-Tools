@@ -14,7 +14,6 @@ import os
 import shutil
 import subprocess
 import sys
-import zipfile
 from pathlib import Path
 from typing import Optional
 
@@ -24,21 +23,89 @@ OLLAMA_TIMEOUT_FAST = 30
 OLLAMA_TIMEOUT_DEEP = 120
 DEEP_MIN_LINES = 150
 
+# Piloté par run_classifier()/CLI (--no-ollama, --model). Si False, la
+# classification reste 100% keyword-matching (rapide, aucun réseau) et la
+# passe 2 (raffinement profond, un appel Ollama par fichier) est sautée.
+OLLAMA_ENABLED = True
+
 VALID_KEYWORDS = {
-    "STRING", "DELAY", "ENTER", "REM", "HOLD", "RELEASE", "GUI", "ALT", "CTRL",
-    "SHIFT", "TAB", "BACKSPACE", "ESC", "SPACE", "CAPSLOCK", "NUMLOCK", "SCROLLLOCK",
-    "UP", "DOWN", "LEFT", "RIGHT", "HOME", "END", "INSERT", "DELETE", "PAGEUP",
-    "PAGEDOWN", "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10",
-    "F11", "F12", "PRINTSCREEN", "PAUSE", "MEDIA_PLAY_PAUSE", "MEDIA_NEXT_TRACK",
-    "MEDIA_PREV_TRACK", "VOLUME_UP", "VOLUME_DOWN", "MUTE", "REMOTE", "LANGUAGE", "UNICODE"
+    "STRING",
+    "DELAY",
+    "ENTER",
+    "REM",
+    "HOLD",
+    "RELEASE",
+    "GUI",
+    "ALT",
+    "CTRL",
+    "SHIFT",
+    "TAB",
+    "BACKSPACE",
+    "ESC",
+    "SPACE",
+    "CAPSLOCK",
+    "NUMLOCK",
+    "SCROLLLOCK",
+    "UP",
+    "DOWN",
+    "LEFT",
+    "RIGHT",
+    "HOME",
+    "END",
+    "INSERT",
+    "DELETE",
+    "PAGEUP",
+    "PAGEDOWN",
+    "F1",
+    "F2",
+    "F3",
+    "F4",
+    "F5",
+    "F6",
+    "F7",
+    "F8",
+    "F9",
+    "F10",
+    "F11",
+    "F12",
+    "PRINTSCREEN",
+    "PAUSE",
+    "MEDIA_PLAY_PAUSE",
+    "MEDIA_NEXT_TRACK",
+    "MEDIA_PREV_TRACK",
+    "VOLUME_UP",
+    "VOLUME_DOWN",
+    "MUTE",
+    "REMOTE",
+    "LANGUAGE",
+    "UNICODE",
 }
 
 TOPICS = [
-    "exfiltration", "PassVault", "remote_access", "CartmanSong", "general",
-    "phishing", "ReverseShell", "Chrome2Discord", "iMessageExfil", "prank",
-    "Telegram", "credentials", "incident_response", "quackberry", "Text2Speech",
-    "destructive", "Mimikatz", "ransom", "web2Discord", "EmailAndTextMessage",
-    "MOAB", "execution", "mobile", "recon"
+    "exfiltration",
+    "PassVault",
+    "remote_access",
+    "CartmanSong",
+    "general",
+    "phishing",
+    "ReverseShell",
+    "Chrome2Discord",
+    "iMessageExfil",
+    "prank",
+    "Telegram",
+    "credentials",
+    "incident_response",
+    "quackberry",
+    "Text2Speech",
+    "destructive",
+    "Mimikatz",
+    "ransom",
+    "web2Discord",
+    "EmailAndTextMessage",
+    "MOAB",
+    "execution",
+    "mobile",
+    "recon",
 ]
 TOPICS_LOWER = {t.lower(): t for t in TOPICS}
 
@@ -48,16 +115,45 @@ DUCKY_EXTENSIONS = {".txt", ".duck", ".ds"}
 HELPER_EXTENSIONS = {".ps1", ".sh", ".bat", ".cmd", ".py", ".vbs", ".rb", ".pl"}
 PAYLOAD_EXTENSIONS = {".bin", ".exe", ".dll", ".msi", ".jar", ".apk"}
 DATA_EXTENSIONS = {
-    ".wav", ".mp3", ".png", ".jpg", ".jpeg", ".gif", ".bmp", ".svg",
-    ".json", ".xml", ".csv", ".dat", ".cfg", ".ini", ".yaml", ".yml",
-    ".html", ".htm", ".css", ".js",
+    ".wav",
+    ".mp3",
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".gif",
+    ".bmp",
+    ".svg",
+    ".json",
+    ".xml",
+    ".csv",
+    ".dat",
+    ".cfg",
+    ".ini",
+    ".yaml",
+    ".yml",
+    ".html",
+    ".htm",
+    ".css",
+    ".js",
 }
-READABLE_EXTENSIONS = DUCKY_EXTENSIONS | HELPER_EXTENSIONS | {".html", ".htm", ".js", ".css", ".json", ".xml", ".yaml", ".yml"}
+READABLE_EXTENSIONS = (
+    DUCKY_EXTENSIONS
+    | HELPER_EXTENSIONS
+    | {".html", ".htm", ".js", ".css", ".json", ".xml", ".yaml", ".yml"}
+)
 SKIP_EXTENSIONS = {".zip", ".gz", ".tar", ".7z", ".rar"}
 SKIP_FILENAMES = {
-    "readme.md", "license", "license.md", "licence", "licence.md",
-    ".ds_store", ".gitignore", ".gitmodules", "contributing.md",
-    "changelog.md", "code_of_conduct.md",
+    "readme.md",
+    "license",
+    "license.md",
+    "licence",
+    "licence.md",
+    ".ds_store",
+    ".gitignore",
+    ".gitmodules",
+    "contributing.md",
+    "changelog.md",
+    "code_of_conduct.md",
 }
 
 HEADER_LINES = 5
@@ -66,6 +162,7 @@ logger = logging.getLogger(__name__)
 
 
 # ─── Deduplication ───────────────────────────────────────────────────────────
+
 
 class DedupIndex:
     def __init__(self):
@@ -84,7 +181,9 @@ class DedupIndex:
             if not stripped:
                 continue
             upper = stripped.upper()
-            if upper.startswith("REM") and any(k in upper for k in ("AUTHOR", "CREDIT", "BY ", "NAME")):
+            if upper.startswith("REM") and any(
+                k in upper for k in ("AUTHOR", "CREDIT", "BY ", "NAME")
+            ):
                 continue
             code_lines.append(stripped)
             if len(code_lines) >= HEADER_LINES:
@@ -108,6 +207,7 @@ class DedupIndex:
 
 # ─── Ducky Script detection ─────────────────────────────────────────────────
 
+
 def is_ducky_script(content: str) -> bool:
     for line in content.upper().splitlines():
         stripped = line.lstrip()
@@ -124,6 +224,7 @@ def read_text_safe(path: Path) -> Optional[str]:
 
 
 # ─── Topic classification — FAST (pass 1) ───────────────────────────────────
+
 
 def classify_content(content: str) -> str:
     return (
@@ -153,10 +254,11 @@ def ask_ollama_fast(content: str) -> Optional[str]:
 
 # ─── Topic classification — DEEP (pass 2) ───────────────────────────────────
 
+
 def ask_ollama_deep(content: str, filename: str) -> Optional[str]:
     """Send at least 150 lines of actual content to Ollama for precise classification."""
     lines = content.splitlines()
-    chunk = "\n".join(lines[:max(DEEP_MIN_LINES, len(lines))])
+    chunk = "\n".join(lines[: max(DEEP_MIN_LINES, len(lines))])
 
     prompt = f"""You are a security expert specializing in BadUSB, Ducky Script, and HID attacks.
 
@@ -194,10 +296,15 @@ Respond with ONLY the exact category name, nothing else."""
 
 
 def _ollama_query(prompt: str, timeout: int) -> Optional[str]:
+    if not OLLAMA_ENABLED:
+        return None
     try:
         result = subprocess.run(
             ["ollama", "run", OLLAMA_MODEL],
-            input=prompt, capture_output=True, text=True, timeout=timeout,
+            input=prompt,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
         )
         raw = result.stdout.strip()
         # try exact match first
@@ -221,6 +328,7 @@ def _ollama_query(prompt: str, timeout: int) -> Optional[str]:
 
 # ─── Bundle detection ────────────────────────────────────────────────────────
 
+
 def find_ducky_scripts_in(directory: Path) -> list[Path]:
     scripts = []
     for f in directory.iterdir():
@@ -238,7 +346,11 @@ def has_companion_files(directory: Path) -> bool:
         if f.is_file() and f.suffix.lower() in dominated:
             return True
     for child in directory.iterdir():
-        if child.is_dir() and child.name.lower() not in {"assets", "__pycache__", ".git"}:
+        if child.is_dir() and child.name.lower() not in {
+            "assets",
+            "__pycache__",
+            ".git",
+        }:
             return True
     return False
 
@@ -260,6 +372,7 @@ def collect_combined_content(directory: Path, ducky_files: list[Path]) -> str:
 
 
 # ─── Path helpers ────────────────────────────────────────────────────────────
+
 
 def unique_dest(dest: Path) -> Path:
     if not dest.exists():
@@ -285,6 +398,7 @@ def unique_dir(dest: Path) -> Path:
 
 
 # ─── Pass 1: fast classification ────────────────────────────────────────────
+
 
 class Stats:
     def __init__(self):
@@ -331,7 +445,10 @@ def process_single(file_path, output_root, dedup, stats):
 def should_skip_dir(name: str) -> bool:
     low = name.lower()
     return low.startswith(".") or low in {
-        "__pycache__", "node_modules", "assets", "classified_badusb",
+        "__pycache__",
+        "node_modules",
+        "assets",
+        "classified_badusb",
     }
 
 
@@ -387,6 +504,7 @@ def pass1_classify(root_dir: Path, output_root: Path, stats: Stats):
 
 # ─── Pass 2: deep Ollama refinement — file by file ──────────────────────────
 
+
 def deep_classify_file(file_path: Path) -> Optional[str]:
     """Read a file and send it through deep Ollama analysis."""
     content = read_text_safe(file_path)
@@ -424,7 +542,7 @@ def deep_classify_bundle(bundle_dir: Path) -> Optional[str]:
     if not votes:
         return None
 
-    winner = max(votes, key=votes.get)
+    winner = max(votes, key=lambda topic: votes[topic])
     logger.info(f"  [VOTE] {bundle_dir.name}/ -> {winner} (votes: {votes})")
     return winner
 
@@ -432,6 +550,9 @@ def deep_classify_bundle(bundle_dir: Path) -> Optional[str]:
 def pass2_refine(output_root: Path, stats: Stats):
     """Re-classify every item in the output using deep Ollama analysis.
     Each readable file is sent individually with 150+ lines."""
+    if not OLLAMA_ENABLED:
+        logger.info("═══ PASS 2 sautée (Ollama désactivé) ═══")
+        return
     logger.info("═══ PASS 2: deep Ollama refinement (file by file, 150 lines min) ═══")
 
     topic_dirs = sorted([d for d in output_root.iterdir() if d.is_dir()])
@@ -457,10 +578,13 @@ def pass2_refine(output_root: Path, stats: Stats):
                 logger.info(f"  [OK] {bundle.name}/ stays in {current_topic}")
 
         # ── standalone scripts ──
-        scripts = sorted([
-            f for f in topic_dir.iterdir()
-            if f.is_file() and f.suffix.lower() in DUCKY_EXTENSIONS
-        ])
+        scripts = sorted(
+            [
+                f
+                for f in topic_dir.iterdir()
+                if f.is_file() and f.suffix.lower() in DUCKY_EXTENSIONS
+            ]
+        )
         for script in scripts:
             content = read_text_safe(script)
             if not content or not is_ducky_script(content):
@@ -491,14 +615,13 @@ def pass2_refine(output_root: Path, stats: Stats):
 
 # ─── GitHub repo downloading ────────────────────────────────────────────────
 
-def download_repos_from_urls(url_file: Path, download_dir: Path) -> Path:
-    """Download all GitHub repos listed in url_file into download_dir."""
-    try:
-        import requests as req
-    except ImportError:
-        logger.error("requests library required for --urls mode: pip install requests")
-        sys.exit(1)
 
+def download_repos_from_urls(url_file: Path, download_dir: Path) -> Path:
+    """Clone (ou met à jour) tous les dépôts GitHub listés dans url_file dans
+    download_dir via `git clone --depth 1` — premier run: clone tout; runs
+    suivants: `git pull` sur les dépôts déjà présents. Voir discover_repos.py
+    pour repérer de nouvelles sources à ajouter à url_file avant de relancer.
+    """
     urls = [
         line.strip()
         for line in url_file.read_text().splitlines()
@@ -515,49 +638,43 @@ def download_repos_from_urls(url_file: Path, download_dir: Path) -> Path:
             logger.warning(f"[{i}/{len(urls)}] Skipping invalid URL: {url}")
             continue
 
-        owner, repo = parts[-2], parts[-1].replace(".git", "")
+        repo = parts[-1].replace(".git", "")
         repo_dest = download_dir / repo
+
         if repo_dest.exists():
-            logger.info(f"[{i}/{len(urls)}] Already exists: {repo}")
+            logger.info(f"[{i}/{len(urls)}] Update: {repo}")
+            result = subprocess.run(
+                ["git", "-C", str(repo_dest), "pull", "--ff-only"],
+                capture_output=True,
+                text=True,
+                timeout=120,
+            )
+            if result.returncode != 0:
+                logger.warning(
+                    f"  git pull failed for {repo}: {result.stderr.strip()[:200]}"
+                )
             success += 1
             continue
 
-        zip_url = f"https://github.com/{owner}/{repo}/archive/refs/heads/main.zip"
-        zip_path = download_dir / f"{repo}.zip"
-
-        logger.info(f"[{i}/{len(urls)}] Downloading {owner}/{repo} ...")
-        try:
-            resp = req.get(zip_url, stream=True, timeout=60)
-            if resp.status_code == 404:
-                zip_url = f"https://github.com/{owner}/{repo}/archive/refs/heads/master.zip"
-                resp = req.get(zip_url, stream=True, timeout=60)
-            resp.raise_for_status()
-
-            with open(zip_path, "wb") as f:
-                for chunk in resp.iter_content(8192):
-                    if chunk:
-                        f.write(chunk)
-
-            with zipfile.ZipFile(zip_path, "r") as zf:
-                zf.extractall(download_dir)
-
-            for extracted in download_dir.iterdir():
-                if extracted.is_dir() and extracted.name.startswith(f"{repo}-"):
-                    extracted.rename(repo_dest)
-                    break
-
-            zip_path.unlink(missing_ok=True)
+        logger.info(f"[{i}/{len(urls)}] Clone: {url} ...")
+        result = subprocess.run(
+            ["git", "clone", "--depth", "1", url, str(repo_dest)],
+            capture_output=True,
+            text=True,
+            timeout=180,
+        )
+        if result.returncode == 0:
             logger.info(f"  -> {repo_dest.name}/")
             success += 1
-        except Exception as e:
-            logger.error(f"  Failed: {e}")
-            zip_path.unlink(missing_ok=True)
+        else:
+            logger.error(f"  Failed: {result.stderr.strip()[:200]}")
 
-    logger.info(f"Download complete: {success}/{len(urls)} repos")
+    logger.info(f"Clone/update complete: {success}/{len(urls)} repos")
     return download_dir
 
 
 # ─── Entry point ─────────────────────────────────────────────────────────────
+
 
 def setup_logging(log_path: Path):
     logging.basicConfig(
@@ -567,12 +684,32 @@ def setup_logging(log_path: Path):
     )
 
 
-def run_classifier(root_dir: Path) -> int:
-    output_root = root_dir / "classified_badusb"
+def run_classifier(
+    root_dir: Path,
+    output_root: Optional[Path] = None,
+    use_ollama: bool = True,
+    model: Optional[str] = None,
+) -> Path:
+    """Classe tous les scripts BadUSB trouvés sous root_dir dans output_root
+    (par défaut root_dir/classified_badusb). Retourne le dossier de sortie —
+    utilisé directement par badusb_pipeline.py pour enchaîner sur l'agent
+    d'enrichissement sans dossier intermédiaire supplémentaire.
+
+    use_ollama=False désactive tout appel réseau (classification 100%
+    keyword-matching, passe 2 sautée) — utile quand le modèle configuré
+    n'est pas installé localement ou pour un run rapide/déterministe.
+    """
+    global OLLAMA_ENABLED, OLLAMA_MODEL
+    OLLAMA_ENABLED = use_ollama
+    if model:
+        OLLAMA_MODEL = model
+
+    if output_root is None:
+        output_root = root_dir / "classified_badusb"
     if output_root.exists():
         shutil.rmtree(output_root)
         print(f"Cleaned previous output: {output_root}")
-    output_root.mkdir(exist_ok=True)
+    output_root.mkdir(parents=True, exist_ok=True)
     log_path = output_root / "classification.log"
 
     setup_logging(log_path)
@@ -587,7 +724,7 @@ def run_classifier(root_dir: Path) -> int:
         f"skipped={stats.skipped}, cleaned={stats.cleaned} ═══"
     )
     print(f"\nLog: {log_path}")
-    return 0
+    return output_root
 
 
 def main() -> int:
@@ -607,8 +744,27 @@ Examples:
         """,
     )
     parser.add_argument("directory", nargs="?", help="Directory to classify")
-    parser.add_argument("--urls", metavar="FILE", help="Download repos from URL list (one URL per line), then classify")
-    parser.add_argument("--output", "-o", metavar="DIR", help="Download directory (default: ./badusb_repos)")
+    parser.add_argument(
+        "--urls",
+        metavar="FILE",
+        help="Download repos from URL list (one URL per line), then classify",
+    )
+    parser.add_argument(
+        "--output",
+        "-o",
+        metavar="DIR",
+        help="Download directory (default: ./badusb_repos)",
+    )
+    parser.add_argument(
+        "--model",
+        default=OLLAMA_MODEL,
+        help=f"Modèle Ollama à utiliser (défaut: {OLLAMA_MODEL})",
+    )
+    parser.add_argument(
+        "--no-ollama",
+        action="store_true",
+        help="Désactive tout appel Ollama (keyword-matching uniquement, pas de passe 2)",
+    )
 
     args = parser.parse_args()
 
@@ -617,19 +773,25 @@ Examples:
         if not url_file.is_file():
             print(f"Error: URL file not found: {url_file}")
             return 1
-        download_dir = Path(args.output).resolve() if args.output else Path("badusb_repos").resolve()
+        download_dir = (
+            Path(args.output).resolve()
+            if args.output
+            else Path("badusb_repos").resolve()
+        )
         log_path = download_dir / "download.log"
         download_dir.mkdir(parents=True, exist_ok=True)
         setup_logging(log_path)
         download_repos_from_urls(url_file, download_dir)
-        return run_classifier(download_dir)
+        run_classifier(download_dir, use_ollama=not args.no_ollama, model=args.model)
+        return 0
 
     if args.directory:
         root_dir = Path(args.directory).resolve()
         if not root_dir.is_dir():
             print(f"Error: {root_dir} is not a valid directory")
             return 1
-        return run_classifier(root_dir)
+        run_classifier(root_dir, use_ollama=not args.no_ollama, model=args.model)
+        return 0
 
     parser.print_help()
     return 1

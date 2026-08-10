@@ -7,7 +7,6 @@
 https://github.com/I-Am-Jakoby/Flipper-Zero-BadUSB
 https://github.com/aleff-github/my-flipper-shits
 https://github.com/FalsePhilosopher/badusb
-https://github.com/UNC0V3R3D/Flipper_Zero-BadUsb
 https://github.com/Kavitate/FlipperZeroBadUSB
 https://github.com/SeenKid/flipper-zero-bad-usb
 https://github.com/RamtinHaf/Flipper-Zero-Bad-USB
@@ -22,7 +21,6 @@ https://github.com/ClumsyLulz/Flipper_Zero_Badusb_hack5_payloads
 https://github.com/narstybits/MacOS-DuckyScripts
 https://github.com/zer0dayf/Ghost-Audit
 https://github.com/Offensive-Wireless/Flipper-Zero
-https://github.com/Unknown3613/BruceFlipperScripts
 
 # === Flipper Zero Tools & Utilities ===
 https://github.com/Zarcolio/flipperzero
