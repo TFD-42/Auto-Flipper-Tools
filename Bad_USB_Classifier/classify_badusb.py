@@ -7,6 +7,8 @@ Pass 2: deep Ollama — re-reads EVERY file (150 lines min) one by one through
          Ollama to get precise per-file classification, then majority-votes
          each bundle/script into the correct topic.  Slow but accurate.
 """
+from __future__ import annotations
+
 import argparse
 import hashlib
 import logging
