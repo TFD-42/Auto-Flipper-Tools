@@ -17,6 +17,29 @@ Be respectful, inclusive, and constructive. We're building tools to help the sec
 7. **Push** to your fork
 8. **Open** a Pull Request
 
+## Adding a Payload Classifier or Automation Script
+
+1. Fork the repository.
+2. Write your code (Python, shell, or Ducky Script).
+3. Include **unit tests** to verify the classifier works without executing malicious code.
+4. Ensure your script has a `--dry-run` or `--safe` option if it could write keystrokes.
+5. Submit a pull request with a clear description.
+
+### Ethical Obligation
+
+- **No hardcoded malicious payloads** in the repository.
+- **No examples** that demonstrate real-world attacks on common devices (e.g., automated Windows password dumping).
+- **All examples** must be clearly marked as **for educational use only**.
+
+See also [ETHICS.md](ETHICS.md) for the project's full ethics statement.
+
+### Pull Request Checklist (BadUSB Scripts)
+
+- [ ] I have tested the script in a safe environment (VM / isolated machine).
+- [ ] The script does **not** automatically execute untrusted code.
+- [ ] Documentation includes warnings and safe-mode instructions.
+- [ ] I have read and agree to the ethics statement.
+
 ## Development Setup
 
 ```bash

@@ -61,8 +61,11 @@ env/
 
 # Project specific
 classified_badusb/
+*_organized/
+*_ready_to_flash/
 *.log
 classification.log
+setup_report.md
 output/
 results/
 temp/
