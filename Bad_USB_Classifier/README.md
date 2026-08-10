@@ -39,6 +39,8 @@ ollama pull qwen2.5:3b
 
 ```bash
 python classify_badusb.py <directory_path>
+# or, with keyword-only classification (no Ollama calls, no pass 2):
+python classify_badusb.py <directory_path> --no-ollama
 ```
 
 ### Example
@@ -57,6 +59,31 @@ badusb_samples/
 │   ├── credentials/
 │   └── unassigned/
 └── classification.log
+```
+
+### Building/refreshing the source corpus
+
+```bash
+# Clone (or `git pull` if already cloned) every repo listed in url.txt
+python classify_badusb.py --urls url.txt --output ./badusb_repos
+
+# Search GitHub/Reddit for new source repos not yet in url.txt (dry-run)
+python discover_repos.py
+# ...and append the ones you want to keep:
+python discover_repos.py --write
+```
+
+### Enriching scripts before flashing
+
+`payload_setup_agent.py` scans an already-classified folder, detects scripts
+that need a value (Discord webhook, Telegram bot/chat id, attacker IP/port,
+email, `[placeholder]` values...), and interactively fills them in — guiding
+you through creating a Discord webhook from scratch if you don't have one
+yet. See [`badusb_pipeline.py`](../badusb_pipeline.py) at the repo root for
+the one-command version that chains classification and enrichment together.
+
+```bash
+python payload_setup_agent.py ./badusb_samples/classified_badusb
 ```
 
 ## Supported File Extensions
