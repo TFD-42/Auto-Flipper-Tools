@@ -106,3 +106,69 @@ def test_reset_clears_stage(client):
     resp = client.post("/api/reset", json={"stage": "source"})
     assert resp.status_code == 200
     assert list(gui_app.SOURCE_DIR.iterdir()) == []
+
+
+# ─── Clone depuis un fichier .txt d'URLs ────────────────────────────────────
+
+
+@pytest.fixture
+def fake_default_url_file(tmp_path, monkeypatch):
+    url_file = tmp_path / "default_url.txt"
+    url_file.write_text(
+        "# commentaire\nhttps://github.com/a/repo-a\nhttps://github.com/b/repo-b\n"
+    )
+    monkeypatch.setattr(gui_app, "DEFAULT_URL_FILE", url_file)
+    return url_file
+
+
+def test_urlfile_default_returns_content_and_count(client, fake_default_url_file):
+    resp = client.get("/api/urlfile/default")
+    assert resp.status_code == 200
+    body = resp.get_json()
+    assert body["count"] == 2
+    assert body["filename"] == "default_url.txt"
+
+
+def test_urlfile_default_missing_returns_404(client, monkeypatch, tmp_path):
+    monkeypatch.setattr(gui_app, "DEFAULT_URL_FILE", tmp_path / "does_not_exist.txt")
+    resp = client.get("/api/urlfile/default")
+    assert resp.status_code == 404
+
+
+def test_clone_list_uses_default_when_no_file_uploaded(
+    client, fake_default_url_file, monkeypatch
+):
+    calls = []
+
+    def fake_download(url_file, download_dir):
+        calls.append(Path(url_file))
+        (download_dir / "repo-a").mkdir()
+        (download_dir / "repo-b").mkdir()
+        return download_dir
+
+    monkeypatch.setattr(gui_app, "download_repos_from_urls", fake_download)
+
+    resp = client.post("/api/clone-list", data={}, content_type="multipart/form-data")
+    assert resp.status_code == 200
+    body = resp.get_json()
+    assert body["total"] == 2
+    assert sorted(body["new_repos"]) == ["repo-a", "repo-b"]
+    assert calls == [fake_default_url_file]
+
+
+def test_clone_list_uses_uploaded_file_when_provided(client, monkeypatch):
+    def fake_download(url_file, download_dir):
+        assert Path(url_file).read_text().strip() == "https://github.com/x/y"
+        (download_dir / "y").mkdir()
+        return download_dir
+
+    monkeypatch.setattr(gui_app, "download_repos_from_urls", fake_download)
+
+    data = {
+        "file": (io.BytesIO(b"https://github.com/x/y\n"), "mylist.txt"),
+    }
+    resp = client.post("/api/clone-list", data=data, content_type="multipart/form-data")
+    assert resp.status_code == 200
+    body = resp.get_json()
+    assert body["source_label"] == "mylist.txt"
+    assert body["new_repos"] == ["y"]

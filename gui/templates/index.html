@@ -31,6 +31,15 @@
       <button id="clone-btn">Cloner</button>
     </div>
 
+    <div class="controls url-file-controls">
+      <label class="filebtn small">
+        <span id="url-file-label">Fichier d'URLs (.txt)…</span>
+        <input type="file" id="url-file-input" accept=".txt" hidden>
+      </label>
+      <button id="clone-list-btn">Cloner la liste</button>
+    </div>
+    <p class="hint" id="url-file-hint">Par défaut : Bad_USB_Classifier/url.txt (chargement...)</p>
+
     <div id="source-status" class="status"></div>
     <div id="source-tree" class="tree"></div>
     <button class="reset-btn" data-stage="source">Vider</button>

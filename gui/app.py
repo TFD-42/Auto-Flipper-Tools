@@ -26,9 +26,10 @@ from flask import Flask, jsonify, request, send_from_directory
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from Bad_USB_Classifier import payload_setup_agent as psa
-from Bad_USB_Classifier.classify_badusb import run_classifier
+from Bad_USB_Classifier.classify_badusb import download_repos_from_urls, run_classifier
 
 APP_DIR = Path(__file__).resolve().parent
+DEFAULT_URL_FILE = APP_DIR.parent / "Bad_USB_Classifier" / "url.txt"
 WORKSPACE = Path.home() / ".auto-flipper-tools" / "gui-workspace"
 SOURCE_DIR = WORKSPACE / "source"
 ORGANIZED_DIR = WORKSPACE / "organized"
@@ -131,6 +132,74 @@ def api_clone():
     if result.returncode != 0:
         return jsonify({"error": result.stderr.strip()[:500]}), 500
     return jsonify({"ok": True, "tree": _tree(SOURCE_DIR)})
+
+
+def _count_urls(text: str) -> int:
+    return sum(
+        1
+        for line in text.splitlines()
+        if line.strip() and not line.strip().startswith("#")
+    )
+
+
+@app.route("/api/urlfile/default")
+def api_urlfile_default():
+    """Renvoie le contenu de Bad_USB_Classifier/url.txt (défaut du champ)."""
+    if not DEFAULT_URL_FILE.is_file():
+        return jsonify({"error": "url.txt introuvable"}), 404
+    text = DEFAULT_URL_FILE.read_text(encoding="utf-8", errors="ignore")
+    return jsonify(
+        {"filename": DEFAULT_URL_FILE.name, "count": _count_urls(text), "text": text}
+    )
+
+
+@app.route("/api/clone-list", methods=["POST"])
+def api_clone_list():
+    """Clone/pull tous les dépôts listés dans un fichier .txt (un URL par
+    ligne, '#' pour les commentaires) — utilise Bad_USB_Classifier/url.txt
+    par défaut si aucun fichier n'est envoyé."""
+    import tempfile
+
+    uploaded = request.files.get("file")
+    if uploaded and uploaded.filename:
+        with tempfile.NamedTemporaryFile(mode="wb", suffix=".txt", delete=False) as tmp:
+            uploaded.save(tmp)
+            url_file = Path(tmp.name)
+        source_label = uploaded.filename
+    else:
+        if not DEFAULT_URL_FILE.is_file():
+            return (
+                jsonify(
+                    {"error": "Aucun fichier fourni et url.txt par défaut introuvable"}
+                ),
+                400,
+            )
+        url_file = DEFAULT_URL_FILE
+        source_label = DEFAULT_URL_FILE.name
+
+    total = _count_urls(url_file.read_text(encoding="utf-8", errors="ignore"))
+    before = {p.name for p in SOURCE_DIR.iterdir() if p.is_dir()}
+
+    try:
+        download_repos_from_urls(url_file, SOURCE_DIR)
+    except (
+        Exception
+    ) as e:  # noqa: BLE001 - on veut remonter l'erreur au lieu de planter le serveur
+        return jsonify({"error": str(e)[:500]}), 500
+    finally:
+        if uploaded:
+            url_file.unlink(missing_ok=True)
+
+    after = {p.name for p in SOURCE_DIR.iterdir() if p.is_dir()}
+    return jsonify(
+        {
+            "ok": True,
+            "source_label": source_label,
+            "total": total,
+            "new_repos": sorted(after - before),
+            "tree": _tree(SOURCE_DIR),
+        }
+    )
 
 
 @app.route("/api/upload", methods=["POST"])

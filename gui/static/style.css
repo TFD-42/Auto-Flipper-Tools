@@ -120,6 +120,22 @@ button:hover { filter: brightness(1.1); }
   display: inline-block;
 }
 
+.filebtn.small {
+  padding: 6px 10px;
+  font-size: 0.78rem;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.url-file-controls {
+  flex-wrap: nowrap;
+}
+
+#url-file-hint {
+  margin-top: -4px;
+}
+
 .reset-btn {
   background: transparent;
   border: 1px solid var(--border);

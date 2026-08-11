@@ -155,6 +155,64 @@ function setupClone() {
   });
 }
 
+// ─── Colonne 1 — Cloner depuis un fichier .txt d'URLs (url.txt par défaut) ──
+
+let selectedUrlFile = null;
+
+async function loadDefaultUrlFileInfo() {
+  const hint = document.getElementById("url-file-hint");
+  try {
+    const res = await fetch("/api/urlfile/default");
+    const data = await res.json();
+    if (data.error) {
+      hint.textContent = "Pas de fichier par défaut (" + data.error + ")";
+      return;
+    }
+    hint.dataset.count = data.count;
+    hint.dataset.filename = data.filename;
+    hint.textContent = `Par défaut : ${data.filename} (${data.count} sources)`;
+  } catch (e) {
+    hint.textContent = "Impossible de charger le fichier par défaut.";
+  }
+}
+
+function setupUrlFileInput() {
+  const input = document.getElementById("url-file-input");
+  const label = document.getElementById("url-file-label");
+  input.addEventListener("change", () => {
+    selectedUrlFile = input.files[0] || null;
+    label.textContent = selectedUrlFile ? selectedUrlFile.name : "Fichier d'URLs (.txt)…";
+  });
+
+  document.getElementById("clone-list-btn").addEventListener("click", async () => {
+    const hint = document.getElementById("url-file-hint");
+    const usingDefault = !selectedUrlFile;
+    setStatus(
+      "source-status",
+      usingDefault
+        ? `Clonage depuis ${hint.dataset.filename || "url.txt"} (défaut)...`
+        : `Clonage depuis ${selectedUrlFile.name}...`,
+      false
+    );
+
+    const form = new FormData();
+    if (selectedUrlFile) form.append("file", selectedUrlFile);
+
+    const res = await fetch("/api/clone-list", { method: "POST", body: form });
+    const data = await res.json();
+    if (data.error) {
+      setStatus("source-status", "Erreur: " + data.error, true);
+      return;
+    }
+    setStatus(
+      "source-status",
+      `${data.source_label}: ${data.new_repos.length} nouveau(x) dépôt(s) clonés sur ${data.total} source(s).`,
+      false
+    );
+    refreshTree("source");
+  });
+}
+
 // ─── Colonne 2 — Classification ──────────────────────────────────────────────
 
 function setupClassify() {
@@ -310,9 +368,11 @@ window.addEventListener("DOMContentLoaded", () => {
   setupDropzone();
   setupFolderInput();
   setupClone();
+  setupUrlFileInput();
   setupClassify();
   setupEnrich();
   setupResets();
+  loadDefaultUrlFileInfo();
   refreshTree("source");
   refreshTree("organized");
   refreshTree("ready");
