@@ -15,6 +15,8 @@
 
 Auto-Flipper-Tools is an automation toolkit for security professionals, researchers, and enthusiasts working with Flipper Zero devices. Its core job: take a messy folder of BadUSB/Ducky Script payloads — your own, or pulled from any of the ~90 community source repos it already knows about — and turn it into a clean, categorized, ready-to-flash folder, filling in the placeholders (Discord webhook, attacker IP, Telegram token...) that individual scripts need before they'll actually work.
 
+![Capture d’écran 2026-08-11 à 19 19 12](https://github.com/user-attachments/assets/8ee29e95-57dd-4322-b0f2-985b65caf7b9)
+
 ### Key Use Cases
 
 - 🔍 **BadUSB Payload Classification** — automatically categorize and organize BadUSB scripts into 24 topic-based folders
