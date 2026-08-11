@@ -1,116 +1,70 @@
 # Promotion & Production-Readiness Report — Auto-Flipper-Tools
 
-Generated via `github-repo-promoter` skill audit (`scripts/repo_audit.py`, live
-GitHub data via authenticated `gh` CLI). All claims below trace to the audit
-JSON or a file read directly — nothing invented.
+*Second pass, run with `+ wiki full`. Builds on the previous audit (still valid, see git history of this file); this update covers what changed since (the GUI, more tests/CI) and delivers full wiki content.*
 
-## Addendum — full badge-based backlinks (follow-up request)
+Generated via `github-repo-promoter` skill audit (`scripts/repo_audit.py`, live GitHub data via authenticated `gh` CLI). All claims below trace to the audit JSON or a file read directly.
 
-Per your follow-up, the partial credits table (§1, ~40 of ~90 repos) has been
-replaced with a fully generated, complete version:
+## 0. Secrets check
 
-- **`scripts/generate_credits_badges.py`** — new script, parses `url.txt` and
-  emits one entry per repo with a **live shields.io stars badge** (dynamic,
-  never hardcoded — see the badge-fabrication rule in §3) that doubles as a
-  real backlink to the original author's repo, grouped under the same
-  category headers `url.txt` already uses.
-- Spliced into `README.suggested.md`'s "Source Repositories & Credits"
-  section — now **79 repos**, one badge+link each, organized by category.
-- **While generating this I checked every URL against the GitHub API and
-  found 2 dead links** already in `url.txt` (`UNC0V3R3D/Flipper_Zero-BadUsb`
-  and `Unknown3613/BruceFlipperScripts`, both HTTP 404 — deleted/renamed
-  upstream) that predate this session. Removed from `url.txt` (was 81 parsed
-  repos, now 79) so the generated badges don't point at broken links.
-- Re-run `python3 scripts/generate_credits_badges.py` any time `url.txt`
-  changes to regenerate this section — this also permanently fixes the
-  sync-drift problem flagged in the original §1 finding below.
+`secrets.scanned_files: 41`, `sensitive_filenames: []`, `possible_secrets: []` — **clean**. (A dedicated, deeper pass — full git history, not just the working tree — was also run separately this session via a secret-scanning skill; also clean. See that report for detail.)
 
-## 0. Secrets check (ran first, as required)
+## 1. Attribution & Provenance — unchanged, still Insufficient
 
-`secrets.scanned_files: 20`, `sensitive_filenames: []`, `possible_secrets: []` — **clean**, nothing flagged in the current working tree.
+No `upstream` remote, no provenance-mentioning commits, no earlier-dated copyright holder. 19 local commits now (up from 11), still no fork/reuse signal. Correctly no Acknowledgments-for-forking section added.
 
-Separately, in this same session, a **real** leak was found and fixed:
-7 commits already pushed to `origin/main` carried author metadata
-`Scooby <scooby@Scoobys-MacBook-Air.local>` (a real local username/hostname),
-and now-deleted setup docs contained `/Users/scooby/...` and a second
-identifier. This was rewritten out of the public history via `git filter-repo`
-+ force-push (with your explicit approval), verified clean via a fresh clone,
-and local dangling refs were purged (`git gc --prune=now`). See `CHANGELOG.suggested.md` for the changelog entry. This is resolved, not a current risk — noted here only for the record.
+Content attribution (third-party payloads processed) is still handled correctly and completely — the README's credits section and the new `Source-Repositories.md` wiki page both state plainly this project doesn't claim authorship of what it classifies.
 
-## 1. Attribution & Provenance
-
-**Code/fork attribution: Insufficient — no evidence found, correctly nothing added.**
-Checked `git.remotes` (only `origin`, no `upstream`), `git.commits_mentioning_provenance` (empty), and `license.copyright_lines` (a single generic "Auto-Flipper-Tools Contributors" notice, no earlier/other name). `github.fork` is `false` with no parent. This codebase (classifier, enrichment agent, discovery script, pipeline) shows no signal of being forked from or reusing another project's source — no Acknowledgments-for-forking section was added, per the skill's own rule to stay silent absent evidence.
-
-**Content attribution (the thing you specifically asked about): already good practice, found one real gap.**
-The README already has a full "Source Repositories & Credits" section crediting ~40 individual authors by name/link, explicitly framed as classifying third-party payloads rather than claiming authorship — this is exactly right and predates this session. The gap: `Bad_USB_Classifier/url.txt` has grown to **~90 repos** (Hak5's official repos, DuckyScript collections, hardware platforms, attack-specific repos, generators/converters — several whole categories) while the README table still only covers the original ~40. A reader could reasonably assume the table is the complete list when it's now roughly half. Fixed in `README.suggested.md`: the table is now explicitly labeled "highlighted subset — see `url.txt` for the full list," with a one-line statement that this project doesn't claim authorship of anything it classifies.
-
-## 2. Production-Readiness Checklist
+## 2. Production-Readiness — what changed since the last pass
 
 | Item | Status | Note |
 |---|---|---|
-| README hook above the fold | ✅ | Present; tightened wording in the draft |
-| Badge row | ⚠️→✅ | Existing badges were accurate but thin (License, Python version, a generic "security: active scanning" badge with no link). Draft adds real CI badges (now genuinely justified — `tests.yml`/`security-scan.yml` exist) and a Cross-Platform badge (now genuinely justified — install scripts + 3-OS CI matrix + per-OS executables) |
-| Table of contents | ❌ | `readme.length_chars` = 18,833, well past the ~4,000 trigger. Not added in the draft — optional, your call, since GitHub auto-generates a heading nav for READMEs already |
-| Quickstart | ✅ | Present and copy-pasteable; now includes the new one-line installers |
-| Features as benefits | ✅ | Present |
-| Single install command | ✅→✅✅ | Was already `pip install -r requirements.txt`; now also has one-line `curl`/`irm` installers and standalone executables (this session) |
-| Dependencies pinned | ⚠️ | `requests>=2.28.0` (unpinned floor) in both `requirements.txt` files — bumped to `>=2.32.0` in this session to match `pyproject.toml` and to move past a requests CVE with no available floor fix below that version (found during an earlier checklist pass) |
-| Dev-dependency separation | ✅ (new) | `pyproject.toml` now has a `[project.optional-dependencies] dev` extra — `pip install -e ".[dev]"` |
-| CONTRIBUTING.md | ✅ | Present, includes BadUSB-specific ethics section |
-| CODE_OF_CONDUCT.md | ❌ | Missing. Drafted as `CODE_OF_CONDUCT.suggested.md` (Contributor Covenant 2.1, short form, with a scope note pointing at ETHICS.md/SECURITY.md) — this repo already invests in community infra (issue templates, PR template, SECURITY.md), so it fits; skip it if you'd rather not formalize a community process |
-| SECURITY.md | ✅ | Present |
-| CHANGELOG.md | ❌ | Missing. Drafted as `CHANGELOG.suggested.md`, populated with this session's real changes plus the existing v1.0.0 history recovered from the old README |
-| Issue/PR templates | ✅ | Both present |
-| CI present | ✅ | `tests.yml`, `security-scan.yml`, and (new this session) `release.yml` |
-| Tests exist | ✅ (new) | Was **0 tests** despite `pytest ... \|\| true` in CI silently reporting green — fixed earlier this session (14 real tests, `\|\| true` removed so CI now actually fails on regressions) |
-| Docs structure | ✅ | `docs/` has 3 consistent files; no wiki content yet despite `github.has_wiki: true` |
-| GitHub description | ✅ | Already solid, keyword-forward, live via `gh` — see §3 |
-| GitHub topics | ✅ | Already 12 specific tags — see §3 for a small delta |
-| Homepage URL | ❌ | Empty. No docs site exists to point it at yet — not actionable right now |
-| Social preview image | — | Couldn't check via API; verify manually at Settings → General → Social preview |
+| Tests | ✅ improved | 3 test files now (was 2): `test_classify_badusb.py`, `test_payload_setup_agent.py`, `test_gui_app.py` |
+| CI | ✅ | still `tests.yml` + `security-scan.yml` + `release.yml`, unchanged file count but the GUI's tests now run in the same matrix |
+| Dependency pinning | ⚠️ unchanged | `requests>=2.32.0`, still an unpinned floor (documented reason: no fixed release exists yet for the one open CVE, per earlier session notes) |
+| Community-health files | ✅ | `CODE_OF_CONDUCT.md`, `CHANGELOG.md` both now present (were missing last pass) |
+| **Wiki** | ❌ → drafted this pass | `github.has_wiki: true` but no content exists yet in the repo. 8 pages drafted in `wiki-drafts/` — see §5 |
+| **`docs/*.md` staleness** (new finding) | ⚠️ | `docs/USAGE.md` and `docs/ARCHITECTURE.md` predate the pipeline, enrichment agent, and GUI — some examples (manual output-path editing, a fabricated log-line format, GitLab CI snippet) no longer match the current tool. Not fixed in this pass (out of scope for a promotion audit to silently rewrite existing docs pages) but flagged, and the more accurate content now lives in the wiki drafts instead |
+| **README internal inconsistency** (new finding, fixed) | ✅ fixed | The Roadmap section still listed "Web interface for classification" as planned, while the "Current Tools" section (added when the GUI shipped) already listed it as done. Removed the stale Roadmap line — this is the only direct edit made to `README.md` in this pass, everything else stays in `.suggested`/draft form |
 
-## 3. SEO — GitHub Description, Topics, Backlinks
+## 3. SEO — a live-data finding you should know about
 
-**Description** — current (`gh api`, live): *"Automated BadUSB classifier and Flipper Zero automation toolkit — AI-powered Ducky Script analysis, batch classification, and payload organization for security professionals"* (159 chars). Already keyword-forward and accurate. Only change I'd suggest, if you want to re-set it, is folding in "cross-platform" now that it's true:
+**Your GitHub topics currently include two entries that don't look intentional**: `automated` and `badini`, alongside the 12 solid ones from last pass. Neither was set by this tool (nothing in this session ran `gh repo edit`). `badini` in particular reads like a typo — possibly meant to be `badusb`-adjacent, or a duplicate/mis-paste. Worth checking `https://github.com/TFD-42/Auto-Flipper-Tools` → Settings → Topics and removing it if it wasn't intentional.
 
-> `Cross-platform BadUSB/Ducky Script classifier + enrichment for Flipper Zero — AI-powered (Ollama), works offline, one-line install`
+Suggested topic additions from last pass (`ollama`, `cli`, `cross-platform`) are still worth adding — the GUI addition this session makes `cli` slightly less exclusively true (there's now a real GUI too), so consider `desktop-gui` or `flask` as an alternative/addition if you want the GUI to be discoverable by its own keywords.
 
-**Topics** — current 12: `automation`, `badusb`, `classification`, `ducky-script`, `flipper`, `flipper-zero`, `open-source`, `payload-analysis`, `python`, `security-automation`, `security-research`, `security-tools`. All still accurate. Suggested additions (specific, not generic — matches what's actually in the code now):
-- `ollama` — real dependency/differentiator, currently unrepresented
-- `cli` — now genuinely a CLI toolkit with console_scripts
-- `pyinstaller` or `standalone-executable` — new release artifact type
-- `cross-platform` — now genuinely true (was arguably a stretch before this session)
+Description is unchanged and still accurate — no update needed.
 
-I did **not** run `gh repo edit` to apply either of these — that field is public the instant it changes, so it's your call on exact wording. One-liner if you want it:
+## 4. Docs — nothing new rewritten this pass
+
+`README.md` already got its full copywriting pass last time (hook-first, badges, honest limitations) and is still accurate apart from the one Roadmap line fixed in §2. This pass's writing effort went into the wiki instead (§5), since that's what was explicitly requested (`+ wiki full`).
+
+## 5. Wiki — full content, drafted in `wiki-drafts/`
+
+GitHub Wikis are a **separate git repository** (`https://github.com/TFD-42/Auto-Flipper-Tools.wiki.git`) — these can't be pushed as part of a normal PR to the main repo. 8 ready-to-paste pages:
+
+| Page | Covers |
+|---|---|
+| `Home.md` | Landing page, links to everything else, one-paragraph project summary |
+| `Installation.md` | One-line installers, standalone executables, manual install, optional extras (`[gui]`, `[dev]`, `[build]`) |
+| `Usage-CLI.md` | All 4 CLI commands with real, verified flags — plus a note that it supersedes the stale parts of `docs/USAGE.md` |
+| `GUI-Guide.md` | The 3-column interface, written from this session's actual verified browser testing (drag & drop, clone-by-URL, clone-by-list, the enrichment form, webhook validation) |
+| `Architecture.md` | How classification, enrichment, and the Ollama tool-calling safety pattern actually work — covers the pipeline/GUI layer that `docs/ARCHITECTURE.md` predates |
+| `Source-Repositories.md` | Full 79-repo credits list with live star badges, generated by `scripts/generate_credits_badges.py` (same content as the README section, wiki-relative links fixed since wiki pages live in a different git repo and can't use repo-relative paths) |
+| `FAQ.md` | Pulled and lightly expanded from the README's FAQ |
+| `Troubleshooting.md` | Pulled from the README plus 2 new entries (missing `git`, PowerShell execution policy) that weren't in the README's shorter troubleshooting section |
+
+**To publish**: clone the wiki repo separately and copy these files in (renaming to match — GitHub wiki page URLs are derived from filename, so `Usage-CLI.md` becomes the `Usage-CLI` page, matching the links already used throughout these drafts):
+
 ```bash
-gh repo edit TFD-42/Auto-Flipper-Tools \
-  --description "Cross-platform BadUSB/Ducky Script classifier + enrichment for Flipper Zero — AI-powered (Ollama), works offline, one-line install" \
-  --add-topic ollama --add-topic cli --add-topic cross-platform
+git clone https://github.com/TFD-42/Auto-Flipper-Tools.wiki.git /tmp/afl-wiki
+cp wiki-drafts/*.md /tmp/afl-wiki/
+cd /tmp/afl-wiki && git add -A && git commit -m "Add full wiki content" && git push
 ```
 
-**Badges** — see `README.suggested.md`. Added: real CI badges (linked to the actual workflow files), a Cross-Platform badge, a "Local-first / optional AI" badge (precise wording — the classifier and enrichment agent both run fully offline with `--no-ollama`; Ollama is a fallback, not a requirement). Deliberately **not** added: a PyPI badge (not published there — see backlinks below), a star-count badge (repo has 3 stars per the live audit; a hand-typed badge would go stale — use the dynamic `img.shields.io/github/stars/...` badge yourself if/when you want one).
+Not run automatically — this is exactly the kind of newly-public push that should go out only after you've reviewed the content.
 
-**Backlinks / discovery checklist** (all external actions, your call on which to pursue):
+## Sections with nothing new to report
 
-- **Awesome-flipperzero lists** — the README/`url.txt` already reference `djsime1/awesome-flipperzero`, `anasancho/awesome-flipperzero`, and `RogueMaster/awesome-flipperzero-withModules`. A PR adding one line to one or more of these (name + one-sentence description + link) is likely the single best backlink available given the exact-match audience. Pitch: *"Auto-Flipper-Tools — classifies and organizes BadUSB/Ducky Script payloads from ~90 community repos into ready-to-flash categories, with AI-optional enrichment for webhooks/IPs/tokens."*
-- **PyPI** — the package now builds cleanly (`python -m build`, verified this session) but isn't published. Publishing it is both a distribution channel and a backlink (PyPI project pages link back to the repo and are independently indexed). Not done automatically — publishing is a one-way action (a PyPI name, once claimed, can't be un-claimed) that should be your call.
-- **Homebrew** — a formula/cask isn't set up; worth considering given the macOS-friendly standalone executable now exists, but it's meaningful ongoing maintenance (Homebrew formulas need to track releases).
-- **LibHunt / AlternativeTo** — reasonable free listings; AlternativeTo works if there's a well-known closest tool to compare against (arguably Hak5's own payload tooling, or the various one-off classifier scripts this project's `url.txt` already lists as sources).
-- **dev.to / blog write-up** — a "why I built a BadUSB payload classifier" post would explain the *why* in a way the README structurally can't, and is a genuine backlink. Only worth it once you're comfortable with the repo getting more eyes on it (it's already public with the identity fix applied, so no blocker there).
-- **Show HN / r/flipperzero** — plausible once you're happy with the polish pass in this report; note the sub already gets tool-share posts, so a specific, working, easy-to-try tool (the one-line installer helps a lot here) tends to land better than a vague announcement.
-
-## 4. What changed and why (docs)
-
-- `README.suggested.md` — reordered hook to lead with the concrete one-line pitch, updated directory structure/current-tools list to match what's actually in the repo now, replaced the two sets of **unverified performance numbers** (no benchmark script existed anywhere in the repo — these looked like leftover marketing copy) with a number I actually measured this session (959 real files, 4 real community repos, 1.83s, keyword-only mode — see the Performance section), fixed the credits-table completeness gap from §1, added the badges from §3, tightened the FAQ/troubleshooting to reflect `--no-ollama` accurately.
-- `CHANGELOG.suggested.md` — didn't exist; drafted with this session's real, verifiable changes plus the v1.0.0 history recovered from the old README's feature list.
-- `CODE_OF_CONDUCT.suggested.md` — didn't exist; drafted, optional.
-- `requirements.txt` / `Bad_USB_Classifier/requirements.txt` — bumped `requests` floor from `2.28.0` to `2.32.0` to match `pyproject.toml` and move past a CVE affecting older floors (no fixed version exists yet above 2.32.5 as of this session — noted, not fully resolvable upstream).
-
-None of the `.suggested.md`/`.suggested` files have been applied over the originals — review and rename (drop `.suggested`) whichever ones you want to keep, or ask me to apply them directly.
-
-## Sections with nothing to report
-
-- **Fork/code attribution**: confirmed no evidence — correctly left blank rather than guessed.
-- **License mismatch**: `LICENSE` and `pyproject.toml` both say MIT, consistent, no action needed.
-- **CI security findings**: bandit currently reports 0 Medium/High (checked earlier this session); nothing new to flag here.
+- No new attribution evidence (still correctly silent on fork/reuse).
+- No new dependency-pinning issues beyond the one already known and documented.
+- No secrets, in the working tree or in git history (checked both this session).
