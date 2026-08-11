@@ -5,7 +5,12 @@ All notable changes to Auto-Flipper-Tools will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.1.0] - Unreleased
+## [1.2.0] - Unreleased
+
+### Added
+- `gui/` — local 3-column desktop GUI (Flask backend + vanilla JS/HTML frontend), `badusb-gui` console script (`pip install -e ".[gui]"`). Source (drag & drop a folder, browse, or clone by URL) → Classé (one-click classify) → Prêt à flasher (per-field enrichment form, with the Discord webhook guide inline and server-side URL validation). Runs on 127.0.0.1 only; verified end-to-end in a real browser session (clone → classify → enrich-scan → validation-reject → apply → real file injection confirmed on disk), plus a dedicated `tests/test_gui_app.py` suite (path-traversal rejection, full flow, reset).
+
+## [1.1.0] - 2026-08-10
 
 ### Added
 - `badusb_pipeline.py` — unified one-command entry point chaining classification and enrichment into a single clean output folder.

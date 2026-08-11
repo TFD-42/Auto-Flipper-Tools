@@ -101,6 +101,23 @@ two-step process required.
 
 [📖 Full Documentation](./Bad_USB_Classifier/README.md)
 
+### `gui/` — 3-Column Desktop GUI
+
+A local web-based interface for the whole pipeline — no terminal needed once
+installed. Three columns: **Source** (drag & drop a folder, browse for one,
+or clone a repo by URL) → **Classé** (one click to classify) → **Prêt à
+flasher** (detects placeholders, shows a form per field — with the Discord
+webhook guide inline — and writes the enriched, ready-to-copy scripts).
+
+```bash
+pip install -e ".[gui]"
+badusb-gui
+```
+
+Opens automatically at `http://127.0.0.1:5115`. Runs entirely on localhost —
+nothing leaves your machine except what you explicitly trigger (a git clone,
+the discover step, or Ollama).
+
 ## Architecture & Roadmap
 
 ### Current Tools
@@ -108,6 +125,7 @@ two-step process required.
 - ✅ Payload Setup Agent — semi-interactive enrichment before flashing
 - ✅ Repo Discovery — GitHub/Reddit search for new payload sources
 - ✅ Unified pipeline (`badusb_pipeline.py`) + automated cross-platform installers + standalone executables
+- ✅ 3-column desktop GUI (`gui/`) — drag & drop / clone → classify → enrich, no terminal required
 
 ### Planned Tools
 - 🔜 Auto-Build System — pre-build and validation for scripts before classification
@@ -132,6 +150,10 @@ Auto-Flipper-Tools/
 ├── scripts/
 │   ├── install.sh               # automated installer: macOS/Linux/Unix
 │   └── install.ps1              # automated installer: Windows
+├── gui/
+│   ├── app.py                   # Flask backend (badusb-gui entry point)
+│   ├── templates/index.html     # 3-column UI
+│   └── static/                  # app.js + style.css
 ├── tests/                       # pytest unit tests
 ├── docs/
 │   ├── INSTALLATION.md

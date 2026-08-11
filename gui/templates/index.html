@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Auto-Flipper-Tools</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header>
+  <h1>Auto-Flipper-Tools</h1>
+  <p class="subtitle">Source → Classé → Prêt à flasher</p>
+</header>
+
+<main class="columns">
+
+  <section class="column" id="col-source">
+    <h2>1. Source</h2>
+    <p class="hint">Glisse un dossier de scripts BadUSB ici, choisis-en un, ou clone un dépôt.</p>
+
+    <div id="dropzone" class="dropzone">Glisse un dossier ici</div>
+
+    <div class="controls">
+      <label class="filebtn">
+        Choisir un dossier…
+        <input type="file" id="folder-input" webkitdirectory multiple hidden>
+      </label>
+    </div>
+
+    <div class="controls">
+      <input type="text" id="clone-url" placeholder="https://github.com/owner/repo">
+      <button id="clone-btn">Cloner</button>
+    </div>
+
+    <div id="source-status" class="status"></div>
+    <div id="source-tree" class="tree"></div>
+    <button class="reset-btn" data-stage="source">Vider</button>
+  </section>
+
+  <section class="column" id="col-organized">
+    <h2>2. Classé</h2>
+    <p class="hint">Classification par thème (mots-clés, + Ollama en secours si activé).</p>
+
+    <div class="controls">
+      <label><input type="checkbox" id="classify-ollama"> Ollama en secours</label>
+      <button id="classify-btn">Classer →</button>
+    </div>
+
+    <div id="organized-status" class="status"></div>
+    <div id="organized-tree" class="tree"></div>
+    <button class="reset-btn" data-stage="organized">Vider</button>
+  </section>
+
+  <section class="column" id="col-ready">
+    <h2>3. Prêt à flasher</h2>
+    <p class="hint">Détecte les scripts qui ont besoin d'une valeur (webhook, IP, token...) et les complète.</p>
+
+    <div class="controls">
+      <label><input type="checkbox" id="enrich-ollama"> Ollama en secours</label>
+      <button id="enrich-scan-btn">Analyser →</button>
+    </div>
+
+    <div id="enrich-form"></div>
+
+    <div id="ready-status" class="status"></div>
+    <div id="ready-tree" class="tree"></div>
+    <button class="reset-btn" data-stage="ready">Vider</button>
+  </section>
+
+</main>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

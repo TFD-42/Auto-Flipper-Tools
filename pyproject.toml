@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "auto-flipper-tools"
-version = "1.1.0"
+version = "1.2.0"
 description = "Automated BadUSB payload classifier and enrichment toolkit for Flipper Zero"
 readme = "README.md"
 license = { text = "MIT" }
@@ -45,8 +45,10 @@ dev = [
     "types-requests",
     "bandit>=1.7.4",
     "safety>=2.3.0",
+    "flask>=3.0.0",
 ]
 build = ["pyinstaller>=6.0.0", "build>=1.0.0"]
+gui = ["flask>=3.0.0"]
 
 [project.urls]
 Homepage = "https://github.com/TFD-42/Auto-Flipper-Tools"
@@ -59,10 +61,14 @@ badusb-pipeline = "badusb_pipeline:main"
 badusb-classify = "Bad_USB_Classifier.classify_badusb:main"
 badusb-setup-agent = "Bad_USB_Classifier.payload_setup_agent:main"
 badusb-discover = "Bad_USB_Classifier.discover_repos:main"
+badusb-gui = "gui.app:main"
 
 [tool.setuptools]
 py-modules = ["badusb_pipeline"]
-packages = ["Bad_USB_Classifier"]
+packages = ["Bad_USB_Classifier", "gui"]
+
+[tool.setuptools.package-data]
+gui = ["templates/*.html", "static/*"]
 
 [tool.isort]
 profile = "black"
