@@ -63,8 +63,51 @@ cd /tmp/afl-wiki && git add -A && git commit -m "Add full wiki content" && git p
 
 Not run automatically — this is exactly the kind of newly-public push that should go out only after you've reviewed the content.
 
-## Sections with nothing new to report
+## Sections with nothing new to report (2nd pass)
 
 - No new attribution evidence (still correctly silent on fork/reuse).
 - No new dependency-pinning issues beyond the one already known and documented.
 - No secrets, in the working tree or in git history (checked both this session).
+
+---
+
+## Third pass — post-rebrand consistency audit
+
+*Re-run after the repo was renamed `Auto-Flipper-Tools` → `BK_Flipper_Full_Pipline` → **`Bad_Usb_Forge` (Flipper Zero HID Auto Tool)`**, after two CodeQL "information exposure through an exception" alerts were fixed in `gui/app.py`, and after a Flipper Zero badge was added to the README.*
+
+### 0. Secrets — still clean
+
+`secrets.scanned_files: 50`, `sensitive_filenames: []`, `possible_secrets: []`.
+
+### 1. Attribution — unchanged, still Insufficient
+
+`commits_mentioning_provenance: []`, 28 commits now, both contributor identities still trace to the same `TFD-42` account. No fork/reuse signal — correctly no Acknowledgments section.
+
+### 2. Production-readiness — findings this pass
+
+| Item | Status | Note |
+|---|---|---|
+| CI / tests / community files | ✅ unchanged | Same 3 workflows, 3 test files, all community-health files present |
+| **Stale project-name leftovers** (new finding, fixed) | ✅ fixed | The rename passes only covered `.md/.py/.yml/.toml/.sh/.ps1/.html` — 3 files with no matching extension pattern still said `Auto-Flipper-Tools`: the `LICENSE` copyright line, the header comment in `Bad_USB_Classifier/url.txt`, and the header comment in `gui/static/app.js`. All 3 now read `Bad_Usb_Forge` |
+| **Broken badge markdown** (new finding, fixed) | ✅ fixed | The "Local-first" badge's URL contained literal, non-encoded `(Ollama)` — in `[text](url)` syntax an unescaped `)` inside the URL closes the Markdown link early. The audit script's own badge extraction confirmed this by truncating mid-URL. Fixed by percent-encoding to `%28Ollama%29`; verified the corrected URL still resolves (HTTP 200) |
+| `requirements.txt` header | ✅ fixed | Same stale-name issue as above, cosmetic only |
+| License (GitHub-recognized) | ✅ confirmed | Audit script reported `license_spdx: null` — checked directly via `gh api repos/.../` and GitHub does correctly detect MIT (`license.key: "mit"`). The `null` is a limitation of this audit script's parsing, not a real gap — noted here so it isn't misread as a missing license next time this runs |
+| Dependency pinning | ⚠️ unchanged | Still `requests>=2.32.0` (floor-pin, not exact) — acceptable for a single-runtime-dependency CLI tool, not blocking |
+
+### 3. SEO — topics/description now clean
+
+The `automated`/`badini` stray topics flagged in the 2nd pass are **gone** — confirmed via live `gh api`, current topic list is 20 curated terms (`badusb`, `flipper-zero`, `flipper-zero-hid`, `hid-injection`, `hid-attacks`, `ducky-script`, `payload-classification`, etc.), all traceable to deliberate choices made this session. Description and homepage both reference the current repo name and URL. No further action needed here.
+
+### 4. Docs — README structurally sound, one badge fix (§2) was the only edit
+
+Headings, TOC-worthy structure, and existing badge set (License, Python version, Tests CI, Security-scan CI, Cross-platform, Local-first AI, Flipper Zero) all check out. No overclaiming found — "local-first," "optional AI," and the platform/test badges all trace to real, verifiable CI config and code.
+
+### 5. Wiki — in sync
+
+Wiki content was re-pushed with the new branding after the rename (verified via fresh clone in the same session); no drift between `wiki-drafts/` and the live wiki.
+
+### Sections with nothing new to report (3rd pass)
+
+- No new attribution evidence.
+- No new secrets, working tree or history.
+- No SEO gaps — the one live-data issue flagged last pass is now resolved.

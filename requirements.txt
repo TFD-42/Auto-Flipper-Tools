@@ -1,4 +1,4 @@
-# Auto-Flipper-Tools Requirements
+# Bad_Usb_Forge Requirements
 # Python 3.8+
 
 requests>=2.32.0

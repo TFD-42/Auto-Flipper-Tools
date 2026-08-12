@@ -1,4 +1,4 @@
-// Auto-Flipper-Tools GUI — 3-column logic (source -> classified -> ready to flash)
+// Bad_Usb_Forge GUI — 3-column logic (source -> classified -> ready to flash)
 
 async function refreshTree(stage) {
   const res = await fetch(`/api/tree/${stage}`);

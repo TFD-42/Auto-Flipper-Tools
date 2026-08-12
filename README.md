@@ -8,7 +8,7 @@
 [![Tests](https://github.com/TFD-42/Bad_Usb_Forge/actions/workflows/tests.yml/badge.svg)](https://github.com/TFD-42/Bad_Usb_Forge/actions/workflows/tests.yml)
 [![Security Scan](https://github.com/TFD-42/Bad_Usb_Forge/actions/workflows/security-scan.yml/badge.svg)](https://github.com/TFD-42/Bad_Usb_Forge/actions/workflows/security-scan.yml)
 [![Cross-Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey.svg)](#quick-start)
-[![Local-first](https://img.shields.io/badge/AI-optional%20%26%20local%20(Ollama)-informational.svg)](#dependencies)
+[![Local-first](https://img.shields.io/badge/AI-optional%20%26%20local%20%28Ollama%29-informational.svg)](#dependencies)
 
 ## Overview
 

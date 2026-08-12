@@ -1,4 +1,4 @@
-# Auto-Flipper-Tools — BadUSB Source Repositories
+# Bad_Usb_Forge — BadUSB Source Repositories
 # Add your own URLs below (one per line)
 # Format: https://github.com/author/repo
 # ──────────────────────────────────────────────────
