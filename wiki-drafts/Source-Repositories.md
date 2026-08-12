@@ -1,6 +1,6 @@
 # Source Repositories & Credits
 
-This project classifies and organizes BadUSB payloads sourced from the community repositories below (**79 repos**, kept in sync with [`Bad_USB_Classifier/url.txt`](https://github.com/TFD-42/BK_Flipper_Full_Pipline/blob/main/Bad_USB_Classifier/url.txt) — the authoritative list, regenerate this section with `python3 scripts/generate_credits_badges.py`). **This project does not claim authorship of any third-party payload it classifies; full credit and copyright remain with each original author.** Star counts are live (shields.io dynamic badges), not hardcoded.
+This project classifies and organizes BadUSB payloads sourced from the community repositories below (**79 repos**, kept in sync with [`Bad_USB_Classifier/url.txt`](https://github.com/TFD-42/Bad_Usb_Forge/blob/main/Bad_USB_Classifier/url.txt) — the authoritative list, regenerate this section with `python3 scripts/generate_credits_badges.py`). **This project does not claim authorship of any third-party payload it classifies; full credit and copyright remain with each original author.** Star counts are live (shields.io dynamic badges), not hardcoded.
 
 ### BadUSB Payload Collections
 
@@ -117,5 +117,5 @@ This project classifies and organizes BadUSB payloads sourced from the community
 - [![htr-tech/ducky stars](https://img.shields.io/github/stars/htr-tech/ducky?style=flat-square&label=%E2%98%85&color=blue)](https://github.com/htr-tech/ducky) [htr-tech/ducky](https://github.com/htr-tech/ducky)
 - [![cecio/USBvalve stars](https://img.shields.io/github/stars/cecio/USBvalve?style=flat-square&label=%E2%98%85&color=blue)](https://github.com/cecio/USBvalve) [cecio/USBvalve](https://github.com/cecio/USBvalve)
 
-> **Want to add your repo?** Fork this project, add your URL to [`Bad_USB_Classifier/url.txt`](https://github.com/TFD-42/BK_Flipper_Full_Pipline/blob/main/Bad_USB_Classifier/url.txt), and open a Pull Request!
+> **Want to add your repo?** Fork this project, add your URL to [`Bad_USB_Classifier/url.txt`](https://github.com/TFD-42/Bad_Usb_Forge/blob/main/Bad_USB_Classifier/url.txt), and open a Pull Request!
 

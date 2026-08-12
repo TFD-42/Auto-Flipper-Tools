@@ -1,12 +1,12 @@
 # Contributing
 
-Full guide lives in [CONTRIBUTING.md](https://github.com/TFD-42/BK_Flipper_Full_Pipline/blob/main/CONTRIBUTING.md) — this page is a quick pointer, not a duplicate.
+Full guide lives in [CONTRIBUTING.md](https://github.com/TFD-42/Bad_Usb_Forge/blob/main/CONTRIBUTING.md) — this page is a quick pointer, not a duplicate.
 
 ## Quick start for contributors
 
 ```bash
-git clone https://github.com/TFD-42/BK_Flipper_Full_Pipline.git
-cd BK_Flipper_Full_Pipline
+git clone https://github.com/TFD-42/Bad_Usb_Forge.git
+cd Bad_Usb_Forge
 python -m venv venv
 source venv/bin/activate
 pip install -e ".[dev]"
@@ -27,8 +27,8 @@ BadUSB-specific ethical checklist (from CONTRIBUTING.md):
 
 ## Adding a new payload source repo
 
-Add the URL to [`Bad_USB_Classifier/url.txt`](https://github.com/TFD-42/BK_Flipper_Full_Pipline/blob/main/Bad_USB_Classifier/url.txt) (one per line, under the relevant `# === category ===` heading) and open a PR. If you have `scripts/generate_credits_badges.py` handy, run it to regenerate the README's credits section so your addition gets a badge and a backlink automatically.
+Add the URL to [`Bad_USB_Classifier/url.txt`](https://github.com/TFD-42/Bad_Usb_Forge/blob/main/Bad_USB_Classifier/url.txt) (one per line, under the relevant `# === category ===` heading) and open a PR. If you have `scripts/generate_credits_badges.py` handy, run it to regenerate the README's credits section so your addition gets a badge and a backlink automatically.
 
 ## Code of Conduct
 
-See [CODE_OF_CONDUCT.md](https://github.com/TFD-42/BK_Flipper_Full_Pipline/blob/main/CODE_OF_CONDUCT.md) (Contributor Covenant 2.1).
+See [CODE_OF_CONDUCT.md](https://github.com/TFD-42/Bad_Usb_Forge/blob/main/CODE_OF_CONDUCT.md) (Contributor Covenant 2.1).

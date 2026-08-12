@@ -25,7 +25,7 @@ def client(tmp_path, monkeypatch):
 def test_index_serves_html(client):
     resp = client.get("/")
     assert resp.status_code == 200
-    assert b"BK_Flipper_Full_Pipline" in resp.data
+    assert b"Bad_Usb_Forge" in resp.data
 
 
 def test_tree_unknown_stage_rejected(client):

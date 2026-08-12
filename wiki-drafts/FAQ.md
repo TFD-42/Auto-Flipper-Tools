@@ -4,13 +4,13 @@
 No. `--no-ollama` (CLI) or the "Ollama en secours" checkbox left unticked (GUI) runs the full classify + enrich pipeline with pattern/keyword matching alone and zero network calls. Ollama is only a fallback for files keyword matching can't confidently classify or scan for placeholders.
 
 **Is this tool legal to use?**
-Yes, but only for authorized security testing and research. Always obtain proper authorization before using any payload against a system you don't own or don't have explicit permission to test. See [ETHICS.md](https://github.com/TFD-42/BK_Flipper_Full_Pipline/blob/main/ETHICS.md).
+Yes, but only for authorized security testing and research. Always obtain proper authorization before using any payload against a system you don't own or don't have explicit permission to test. See [ETHICS.md](https://github.com/TFD-42/Bad_Usb_Forge/blob/main/ETHICS.md).
 
 **What script formats are supported?**
 Ducky Script: `.txt`, `.duck`, `.ds`.
 
 **Can I use this commercially?**
-Yes, under the MIT license. Please include license attribution — see [LICENSE](https://github.com/TFD-42/BK_Flipper_Full_Pipline/blob/main/LICENSE).
+Yes, under the MIT license. Please include license attribution — see [LICENSE](https://github.com/TFD-42/Bad_Usb_Forge/blob/main/LICENSE).
 
 **Does this tool claim authorship of the payloads it organizes?**
 No. It classifies and organizes third-party community payloads sourced from the repos in `Bad_USB_Classifier/url.txt`. Full credit and copyright remain with each original author — see [Source Repositories & Credits](Source-Repositories).

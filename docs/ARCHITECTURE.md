@@ -1,6 +1,6 @@
 # Architecture & Design
 
-Technical overview of BK_Flipper_Full_Pipline architecture.
+Technical overview of Bad_Usb_Forge architecture.
 
 ## System Design
 
@@ -197,7 +197,7 @@ BadUSB Payloads
 ### Directory Layout
 
 ```
-BK_Flipper_Full_Pipline/
+Bad_Usb_Forge/
 ├── .github/
 │   └── workflows/           # CI/CD pipelines
 │       ├── security-scan.yml

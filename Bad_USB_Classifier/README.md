@@ -168,7 +168,7 @@ This tool is designed for authorized security testing, research, and defensive p
 
 ## Author
 
-Developed as part of BK_Flipper_Full_Pipline suite for security automation and analysis.
+Developed as part of Bad_Usb_Forge suite for security automation and analysis.
 
 ## Support
 

@@ -36,12 +36,12 @@ PowerShell's execution policy is blocking the `irm | iex` one-liner. Either run 
 
 ```powershell
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-irm https://raw.githubusercontent.com/TFD-42/BK_Flipper_Full_Pipline/main/scripts/install.ps1 | iex
+irm https://raw.githubusercontent.com/TFD-42/Bad_Usb_Forge/main/scripts/install.ps1 | iex
 ```
 
 or download `scripts/install.ps1` and inspect it before running, if you'd rather not change the execution policy at all.
 
 ## Still stuck?
 
-- [Open an issue](https://github.com/TFD-42/BK_Flipper_Full_Pipline/issues)
+- [Open an issue](https://github.com/TFD-42/Bad_Usb_Forge/issues)
 - Check [FAQ](FAQ) and [Usage — CLI](Usage-CLI) / [Usage — GUI](GUI-Guide)

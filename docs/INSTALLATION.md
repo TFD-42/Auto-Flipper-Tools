@@ -1,6 +1,6 @@
 # Installation Guide
 
-Complete setup instructions for BK_Flipper_Full_Pipline.
+Complete setup instructions for Bad_Usb_Forge.
 
 ## System Requirements
 
@@ -12,8 +12,8 @@ Complete setup instructions for BK_Flipper_Full_Pipline.
 ## Step 1: Clone Repository
 
 ```bash
-git clone https://github.com/TFD-42/BK_Flipper_Full_Pipline.git
-cd BK_Flipper_Full_Pipline
+git clone https://github.com/TFD-42/Bad_Usb_Forge.git
+cd Bad_Usb_Forge
 ```
 
 ## Step 2: Create Virtual Environment (Recommended)

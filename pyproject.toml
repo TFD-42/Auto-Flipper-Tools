@@ -51,10 +51,10 @@ build = ["pyinstaller>=6.0.0", "build>=1.0.0"]
 gui = ["flask>=3.0.0"]
 
 [project.urls]
-Homepage = "https://github.com/TFD-42/BK_Flipper_Full_Pipline"
-Repository = "https://github.com/TFD-42/BK_Flipper_Full_Pipline"
-Issues = "https://github.com/TFD-42/BK_Flipper_Full_Pipline/issues"
-Changelog = "https://github.com/TFD-42/BK_Flipper_Full_Pipline/releases"
+Homepage = "https://github.com/TFD-42/Bad_Usb_Forge"
+Repository = "https://github.com/TFD-42/Bad_Usb_Forge"
+Issues = "https://github.com/TFD-42/Bad_Usb_Forge/issues"
+Changelog = "https://github.com/TFD-42/Bad_Usb_Forge/releases"
 
 [project.scripts]
 badusb-pipeline = "badusb_pipeline:main"

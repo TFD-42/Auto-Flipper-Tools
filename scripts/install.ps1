@@ -1,7 +1,7 @@
 #!/usr/bin/env pwsh
 <#
 .SYNOPSIS
-  BK_Flipper_Full_Pipline — automated Windows installer.
+  Bad_Usb_Forge — automated Windows installer.
 
 .DESCRIPTION
   Detects Python 3.8+, creates a dedicated venv in %USERPROFILE%\.auto-flipper-tools\venv,
@@ -11,7 +11,7 @@
   elevation.
 
 .EXAMPLE
-  irm https://raw.githubusercontent.com/TFD-42/BK_Flipper_Full_Pipline/main/scripts/install.ps1 | iex
+  irm https://raw.githubusercontent.com/TFD-42/Bad_Usb_Forge/main/scripts/install.ps1 | iex
 .EXAMPLE
   # from a local clone:
   .\scripts\install.ps1
@@ -19,7 +19,7 @@
 
 $ErrorActionPreference = "Stop"
 
-$RepoUrl     = "https://github.com/TFD-42/BK_Flipper_Full_Pipline.git"
+$RepoUrl     = "https://github.com/TFD-42/Bad_Usb_Forge.git"
 $InstallRoot = if ($env:AUTO_FLIPPER_HOME) { $env:AUTO_FLIPPER_HOME } else { Join-Path $env:USERPROFILE ".auto-flipper-tools" }
 $VenvDir     = Join-Path $InstallRoot "venv"
 $BinDir      = Join-Path $InstallRoot "bin"
