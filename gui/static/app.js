@@ -1,4 +1,4 @@
-// Auto-Flipper-Tools GUI — logique 3 colonnes (source -> classé -> prêt à flasher)
+// Auto-Flipper-Tools GUI — 3-column logic (source -> classified -> ready to flash)
 
 async function refreshTree(stage) {
   const res = await fetch(`/api/tree/${stage}`);
@@ -10,7 +10,7 @@ async function refreshTree(stage) {
 function renderTree(container, data) {
   container.innerHTML = "";
   if (!data.exists || data.children.length === 0) {
-    container.innerHTML = '<p class="empty">(vide)</p>';
+    container.innerHTML = '<p class="empty">(empty)</p>';
     return;
   }
   container.appendChild(renderNodes(data.children));
@@ -39,12 +39,12 @@ function setStatus(id, message, isError) {
   el.className = "status " + (isError ? "error" : "ok");
 }
 
-// ─── Colonne 1 — Source: dossier déposé / choisi / cloné ────────────────────
+// ─── Column 1 — Source: dropped / picked / cloned folder ────────────────────
 
 async function uploadFiles(fileEntries) {
   // fileEntries: [{file, relpath}]
   if (fileEntries.length === 0) return;
-  setStatus("source-status", `Envoi de ${fileEntries.length} fichier(s)...`, false);
+  setStatus("source-status", `Uploading ${fileEntries.length} file(s)...`, false);
 
   const CHUNK = 200;
   let written = 0;
@@ -58,13 +58,13 @@ async function uploadFiles(fileEntries) {
     const res = await fetch("/api/upload", { method: "POST", body: form });
     const data = await res.json();
     if (data.error) {
-      setStatus("source-status", "Erreur: " + data.error, true);
+      setStatus("source-status", "Error: " + data.error, true);
       return;
     }
     written += data.written;
-    setStatus("source-status", `${written}/${fileEntries.length} fichier(s) envoyés...`, false);
+    setStatus("source-status", `${written}/${fileEntries.length} file(s) uploaded...`, false);
   }
-  setStatus("source-status", `${written} fichier(s) importés.`, false);
+  setStatus("source-status", `${written} file(s) imported.`, false);
   refreshTree("source");
 }
 
@@ -138,7 +138,7 @@ function setupClone() {
   document.getElementById("clone-btn").addEventListener("click", async () => {
     const url = document.getElementById("clone-url").value.trim();
     if (!url) return;
-    setStatus("source-status", "Clonage...", false);
+    setStatus("source-status", "Cloning...", false);
     const res = await fetch("/api/clone", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -146,16 +146,16 @@ function setupClone() {
     });
     const data = await res.json();
     if (data.error) {
-      setStatus("source-status", "Erreur: " + data.error, true);
+      setStatus("source-status", "Error: " + data.error, true);
       return;
     }
-    setStatus("source-status", "Cloné.", false);
+    setStatus("source-status", "Cloned.", false);
     document.getElementById("clone-url").value = "";
     refreshTree("source");
   });
 }
 
-// ─── Colonne 1 — Cloner depuis un fichier .txt d'URLs (url.txt par défaut) ──
+// ─── Column 1 — Clone from a .txt URL list file (defaults to url.txt) ───────
 
 let selectedUrlFile = null;
 
@@ -165,14 +165,14 @@ async function loadDefaultUrlFileInfo() {
     const res = await fetch("/api/urlfile/default");
     const data = await res.json();
     if (data.error) {
-      hint.textContent = "Pas de fichier par défaut (" + data.error + ")";
+      hint.textContent = "No default file (" + data.error + ")";
       return;
     }
     hint.dataset.count = data.count;
     hint.dataset.filename = data.filename;
-    hint.textContent = `Par défaut : ${data.filename} (${data.count} sources)`;
+    hint.textContent = `Default: ${data.filename} (${data.count} sources)`;
   } catch (e) {
-    hint.textContent = "Impossible de charger le fichier par défaut.";
+    hint.textContent = "Could not load the default file.";
   }
 }
 
@@ -181,7 +181,7 @@ function setupUrlFileInput() {
   const label = document.getElementById("url-file-label");
   input.addEventListener("change", () => {
     selectedUrlFile = input.files[0] || null;
-    label.textContent = selectedUrlFile ? selectedUrlFile.name : "Fichier d'URLs (.txt)…";
+    label.textContent = selectedUrlFile ? selectedUrlFile.name : "URL list file (.txt)…";
   });
 
   document.getElementById("clone-list-btn").addEventListener("click", async () => {
@@ -190,8 +190,8 @@ function setupUrlFileInput() {
     setStatus(
       "source-status",
       usingDefault
-        ? `Clonage depuis ${hint.dataset.filename || "url.txt"} (défaut)...`
-        : `Clonage depuis ${selectedUrlFile.name}...`,
+        ? `Cloning from ${hint.dataset.filename || "url.txt"} (default)...`
+        : `Cloning from ${selectedUrlFile.name}...`,
       false
     );
 
@@ -201,23 +201,23 @@ function setupUrlFileInput() {
     const res = await fetch("/api/clone-list", { method: "POST", body: form });
     const data = await res.json();
     if (data.error) {
-      setStatus("source-status", "Erreur: " + data.error, true);
+      setStatus("source-status", "Error: " + data.error, true);
       return;
     }
     setStatus(
       "source-status",
-      `${data.source_label}: ${data.new_repos.length} nouveau(x) dépôt(s) clonés sur ${data.total} source(s).`,
+      `${data.source_label}: ${data.new_repos.length} new repo(s) cloned out of ${data.total} source(s).`,
       false
     );
     refreshTree("source");
   });
 }
 
-// ─── Colonne 2 — Classification ──────────────────────────────────────────────
+// ─── Column 2 — Classification ───────────────────────────────────────────────
 
 function setupClassify() {
   document.getElementById("classify-btn").addEventListener("click", async () => {
-    setStatus("organized-status", "Classification en cours...", false);
+    setStatus("organized-status", "Classifying...", false);
     const useOllama = document.getElementById("classify-ollama").checked;
     const res = await fetch("/api/classify", {
       method: "POST",
@@ -226,16 +226,16 @@ function setupClassify() {
     });
     const data = await res.json();
     if (data.error) {
-      setStatus("organized-status", "Erreur: " + data.error, true);
+      setStatus("organized-status", "Error: " + data.error, true);
       return;
     }
-    setStatus("organized-status", "Classification terminée.", false);
+    setStatus("organized-status", "Classification done.", false);
     refreshTree("organized");
     refreshTree("ready");
   });
 }
 
-// ─── Colonne 3 — Enrichissement ──────────────────────────────────────────────
+// ─── Column 3 — Enrichment ────────────────────────────────────────────────────
 
 function renderEnrichForm(data) {
   const container = document.getElementById("enrich-form");
@@ -243,7 +243,7 @@ function renderEnrichForm(data) {
 
   const summary = document.createElement("p");
   summary.className = "hint";
-  summary.textContent = `${data.ready_count} prêt(s) sans config, ${data.to_configure_count} à configurer, ${data.skipped_count} ignoré(s).`;
+  summary.textContent = `${data.ready_count} ready with no config, ${data.to_configure_count} to configure, ${data.skipped_count} skipped.`;
   container.appendChild(summary);
 
   if (data.fields.length === 0) {
@@ -255,14 +255,14 @@ function renderEnrichForm(data) {
     box.className = "field-box";
 
     const label = document.createElement("label");
-    label.textContent = `${field.label} (${field.files.length} fichier(s))`;
+    label.textContent = `${field.label} (${field.files.length} file(s))`;
     box.appendChild(label);
 
     if (field.key === "discord_webhook") {
       const guideBtn = document.createElement("button");
       guideBtn.type = "button";
       guideBtn.className = "guide-btn";
-      guideBtn.textContent = "Pas encore de webhook ? Guide";
+      guideBtn.textContent = "Don't have a webhook yet? Guide";
       const guide = document.createElement("pre");
       guide.className = "guide-text hidden";
       guide.textContent = data.discord_webhook_guide;
@@ -281,12 +281,12 @@ function renderEnrichForm(data) {
     const filesToggle = document.createElement("button");
     filesToggle.type = "button";
     filesToggle.className = "files-toggle";
-    filesToggle.textContent = "voir les fichiers concernés";
+    filesToggle.textContent = "show affected files";
     const filesList = document.createElement("ul");
     filesList.className = "affected-files hidden";
     for (const f of field.files) {
       const li = document.createElement("li");
-      li.textContent = `${f.file} (ligne ${f.line_no})`;
+      li.textContent = `${f.file} (line ${f.line_no})`;
       filesList.appendChild(li);
     }
     filesToggle.addEventListener("click", () => filesList.classList.toggle("hidden"));
@@ -298,7 +298,7 @@ function renderEnrichForm(data) {
 
   const applyBtn = document.createElement("button");
   applyBtn.id = "enrich-apply-btn";
-  applyBtn.textContent = "Appliquer et finaliser →";
+  applyBtn.textContent = "Apply and finalize →";
   applyBtn.addEventListener("click", applyEnrichment);
   container.appendChild(applyBtn);
 }
@@ -311,7 +311,7 @@ async function applyEnrichment() {
       values[input.dataset.fieldKey] = input.value.trim();
     }
   }
-  setStatus("ready-status", "Application...", false);
+  setStatus("ready-status", "Applying...", false);
   const res = await fetch("/api/enrich/apply", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -319,16 +319,16 @@ async function applyEnrichment() {
   });
   const data = await res.json();
   if (data.error) {
-    setStatus("ready-status", "Erreur: " + data.error, true);
+    setStatus("ready-status", "Error: " + data.error, true);
     return;
   }
-  setStatus("ready-status", "Terminé — prêt à copier sur la carte SD.", false);
+  setStatus("ready-status", "Done — ready to copy onto the SD card.", false);
   refreshTree("ready");
 }
 
 function setupEnrich() {
   document.getElementById("enrich-scan-btn").addEventListener("click", async () => {
-    setStatus("ready-status", "Analyse en cours...", false);
+    setStatus("ready-status", "Scanning...", false);
     const useOllama = document.getElementById("enrich-ollama").checked;
     const res = await fetch("/api/enrich/scan", {
       method: "POST",
@@ -337,7 +337,7 @@ function setupEnrich() {
     });
     const data = await res.json();
     if (data.error) {
-      setStatus("ready-status", "Erreur: " + data.error, true);
+      setStatus("ready-status", "Error: " + data.error, true);
       return;
     }
     setStatus("ready-status", "", false);

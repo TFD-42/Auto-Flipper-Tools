@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.2.0] - Unreleased
 
 ### Added
-- `gui/` — local 3-column desktop GUI (Flask backend + vanilla JS/HTML frontend), `badusb-gui` console script (`pip install -e ".[gui]"`). Source (drag & drop a folder, browse, or clone by URL) → Classé (one-click classify) → Prêt à flasher (per-field enrichment form, with the Discord webhook guide inline and server-side URL validation). Runs on 127.0.0.1 only; verified end-to-end in a real browser session (clone → classify → enrich-scan → validation-reject → apply → real file injection confirmed on disk), plus a dedicated `tests/test_gui_app.py` suite (path-traversal rejection, full flow, reset).
+- `gui/` — local 3-column desktop GUI (Flask backend + vanilla JS/HTML frontend), `badusb-gui` console script (`pip install -e ".[gui]"`). Source (drag & drop a folder, browse, or clone by URL) → Classified (one-click classify) → Ready to flash (per-field enrichment form, with the Discord webhook guide inline and server-side URL validation). Runs on 127.0.0.1 only; verified end-to-end in a real browser session (clone → classify → enrich-scan → validation-reject → apply → real file injection confirmed on disk), plus a dedicated `tests/test_gui_app.py` suite (path-traversal rejection, full flow, reset).
 
 ## [1.1.0] - 2026-08-10
 

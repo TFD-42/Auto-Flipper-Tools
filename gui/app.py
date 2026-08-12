@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 """
-Auto-Flipper-Tools GUI — interface web locale à 3 colonnes.
+Auto-Flipper-Tools GUI — local 3-column web interface.
 
-Colonne 1 (source)   : glisser un dossier, ou cloner un dépôt via URL.
-Colonne 2 (organized) : résultat de la classification (thème par thème).
-Colonne 3 (ready)     : résultat de l'enrichissement (webhooks/IP/tokens
-                        injectés), prêt à copier sur la carte SD du Flipper.
+Column 1 (source)    : drop a folder, or clone a repo by URL.
+Column 2 (organized) : classification result (theme by theme).
+Column 3 (ready)      : enrichment result (webhooks/IPs/tokens injected),
+                        ready to copy onto the Flipper's SD card.
 
-Application locale mono-utilisateur (pas d'auth, pas de multi-session) —
-tourne sur 127.0.0.1 uniquement, pensée pour un usage desktop via navigateur.
-Aucune donnée ne sort de la machine sauf ce que l'utilisateur déclenche
-explicitement (clone git, découverte GitHub/Reddit, Ollama).
+Local, single-user application (no auth, no multi-session) — runs on
+127.0.0.1 only, meant for desktop use through a browser. No data leaves the
+machine except what the user explicitly triggers (git clone, GitHub/Reddit
+discovery, Ollama).
 """
 from __future__ import annotations
 
@@ -44,24 +44,24 @@ app = Flask(
     template_folder=str(APP_DIR / "templates"),
 )
 
-# État en mémoire du dernier scan d'enrichissement — un process mono-utilisateur
-# local n'a pas besoin de session store; le plan est réutilisé entre le scan
-# (GET /api/enrich/scan) et l'application des valeurs (POST /api/enrich/apply).
+# In-memory state for the last enrichment scan — a local single-user process
+# doesn't need a session store; the plan is reused between the scan
+# (GET /api/enrich/scan) and applying the values (POST /api/enrich/apply).
 _last_plan: psa.SetupPlan | None = None
 _last_matches_by_id: dict[str, tuple[Path, psa.FieldMatch]] = {}
 
 
 def _safe_join(base: Path, relative: str) -> Path:
-    """Empêche toute traversée de chemin (../) lors de l'upload de fichiers."""
+    """Prevents any path traversal (../) when uploading files."""
     candidate = (base / relative).resolve()
     base_resolved = base.resolve()
     if base_resolved not in candidate.parents and candidate != base_resolved:
-        raise ValueError(f"Chemin invalide (hors workspace): {relative}")
+        raise ValueError(f"Invalid path (outside workspace): {relative}")
     return candidate
 
 
 def _tree(root: Path) -> dict[str, Any]:
-    """Construit un arbre JSON du dossier pour affichage colonne."""
+    """Builds a JSON tree of the folder for column display."""
 
     def walk(d: Path) -> list[dict[str, Any]]:
         entries: list[dict[str, Any]] = []
@@ -114,15 +114,15 @@ def api_clone():
     url = (data.get("url") or "").strip()
     if not url.startswith(("https://", "http://")):
         return (
-            jsonify({"error": "URL invalide — attendu https://github.com/owner/repo"}),
+            jsonify({"error": "Invalid URL — expected https://github.com/owner/repo"}),
             400,
         )
     repo_name = url.rstrip("/").split("/")[-1].replace(".git", "")
     if not repo_name or "/" in repo_name or repo_name in (".", ".."):
-        return jsonify({"error": "Nom de dépôt invalide"}), 400
+        return jsonify({"error": "Invalid repository name"}), 400
     dest = SOURCE_DIR / repo_name
     if dest.exists():
-        return jsonify({"error": f"{repo_name} existe déjà dans la source"}), 400
+        return jsonify({"error": f"{repo_name} already exists in the source"}), 400
     result = subprocess.run(
         ["git", "clone", "--depth", "1", url, str(dest)],
         capture_output=True,
@@ -144,9 +144,9 @@ def _count_urls(text: str) -> int:
 
 @app.route("/api/urlfile/default")
 def api_urlfile_default():
-    """Renvoie le contenu de Bad_USB_Classifier/url.txt (défaut du champ)."""
+    """Returns the content of Bad_USB_Classifier/url.txt (the field's default)."""
     if not DEFAULT_URL_FILE.is_file():
-        return jsonify({"error": "url.txt introuvable"}), 404
+        return jsonify({"error": "url.txt not found"}), 404
     text = DEFAULT_URL_FILE.read_text(encoding="utf-8", errors="ignore")
     return jsonify(
         {"filename": DEFAULT_URL_FILE.name, "count": _count_urls(text), "text": text}
@@ -155,9 +155,9 @@ def api_urlfile_default():
 
 @app.route("/api/clone-list", methods=["POST"])
 def api_clone_list():
-    """Clone/pull tous les dépôts listés dans un fichier .txt (un URL par
-    ligne, '#' pour les commentaires) — utilise Bad_USB_Classifier/url.txt
-    par défaut si aucun fichier n'est envoyé."""
+    """Clones/pulls every repo listed in a .txt file (one URL per line,
+    '#' for comments) — falls back to Bad_USB_Classifier/url.txt if no
+    file is uploaded."""
     import tempfile
 
     uploaded = request.files.get("file")
@@ -170,7 +170,7 @@ def api_clone_list():
         if not DEFAULT_URL_FILE.is_file():
             return (
                 jsonify(
-                    {"error": "Aucun fichier fourni et url.txt par défaut introuvable"}
+                    {"error": "No file provided and the default url.txt was not found"}
                 ),
                 400,
             )
@@ -184,7 +184,7 @@ def api_clone_list():
         download_repos_from_urls(url_file, SOURCE_DIR)
     except (
         Exception
-    ) as e:  # noqa: BLE001 - on veut remonter l'erreur au lieu de planter le serveur
+    ) as e:  # noqa: BLE001 - surface the error instead of crashing the server
         return jsonify({"error": str(e)[:500]}), 500
     finally:
         if uploaded:
@@ -204,12 +204,12 @@ def api_clone_list():
 
 @app.route("/api/upload", methods=["POST"])
 def api_upload():
-    """Reçoit un lot de fichiers (drag&drop de dossier ou <input webkitdirectory>),
-    chaque fichier porte son chemin relatif dans le champ `relpath`."""
+    """Receives a batch of files (folder drag&drop or <input webkitdirectory>),
+    each file carrying its relative path in the `relpath` field."""
     files = request.files.getlist("files")
     relpaths = request.form.getlist("relpaths")
     if len(files) != len(relpaths):
-        return jsonify({"error": "Désynchronisation fichiers/chemins"}), 400
+        return jsonify({"error": "Files/paths out of sync"}), 400
 
     written = 0
     for f, relpath in zip(files, relpaths):
@@ -233,9 +233,7 @@ def api_classify():
     if not any(SOURCE_DIR.iterdir()):
         return (
             jsonify(
-                {
-                    "error": "Dossier source vide — dépose des fichiers ou clone un dépôt d'abord"
-                }
+                {"error": "Source folder is empty — drop files or clone a repo first"}
             ),
             400,
         )
@@ -263,7 +261,7 @@ def api_enrich_scan():
 
     if not ORGANIZED_DIR.is_dir() or not any(ORGANIZED_DIR.iterdir()):
         return (
-            jsonify({"error": "Rien à enrichir — lance d'abord la classification"}),
+            jsonify({"error": "Nothing to enrich — run classification first"}),
             400,
         )
 
@@ -308,7 +306,7 @@ def api_enrich_scan():
 @app.route("/api/enrich/apply", methods=["POST"])
 def api_enrich_apply():
     if _last_plan is None:
-        return jsonify({"error": "Lance d'abord un scan (/api/enrich/scan)"}), 400
+        return jsonify({"error": "Run a scan first (/api/enrich/scan)"}), 400
 
     data = request.get_json(force=True) or {}
     values_by_key: dict[str, str] = data.get("values") or {}  # {field_key: value}
@@ -318,7 +316,7 @@ def api_enrich_apply():
 
     for key, val in values_by_key.items():
         if key == "discord_webhook" and val and not psa.DISCORD_WEBHOOK_RE.match(val):
-            return jsonify({"error": f"URL de webhook Discord invalide: {val}"}), 400
+            return jsonify({"error": f"Invalid Discord webhook URL: {val}"}), 400
 
     values: dict[str, dict[Path, str]] = {}
     for match_id, (path, m) in _last_matches_by_id.items():
@@ -362,13 +360,13 @@ def main() -> int:
     import argparse
 
     parser = argparse.ArgumentParser(
-        description="Auto-Flipper-Tools — interface graphique locale"
+        description="Auto-Flipper-Tools — local desktop GUI"
     )
     parser.add_argument("--port", type=int, default=5115)
     parser.add_argument(
         "--no-browser",
         action="store_true",
-        help="Ne pas ouvrir le navigateur automatiquement",
+        help="Don't open the browser automatically",
     )
     args = parser.parse_args()
 

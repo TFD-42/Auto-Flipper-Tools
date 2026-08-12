@@ -25,9 +25,9 @@ OLLAMA_TIMEOUT_FAST = 30
 OLLAMA_TIMEOUT_DEEP = 120
 DEEP_MIN_LINES = 150
 
-# Piloté par run_classifier()/CLI (--no-ollama, --model). Si False, la
-# classification reste 100% keyword-matching (rapide, aucun réseau) et la
-# passe 2 (raffinement profond, un appel Ollama par fichier) est sautée.
+# Controlled by run_classifier()/CLI (--no-ollama, --model). If False,
+# classification stays 100% keyword-matching (fast, no network) and pass 2
+# (deep refinement, one Ollama call per file) is skipped.
 OLLAMA_ENABLED = True
 
 VALID_KEYWORDS = {
@@ -553,7 +553,7 @@ def pass2_refine(output_root: Path, stats: Stats):
     """Re-classify every item in the output using deep Ollama analysis.
     Each readable file is sent individually with 150+ lines."""
     if not OLLAMA_ENABLED:
-        logger.info("═══ PASS 2 sautée (Ollama désactivé) ═══")
+        logger.info("═══ PASS 2 skipped (Ollama disabled) ═══")
         return
     logger.info("═══ PASS 2: deep Ollama refinement (file by file, 150 lines min) ═══")
 
@@ -619,10 +619,11 @@ def pass2_refine(output_root: Path, stats: Stats):
 
 
 def download_repos_from_urls(url_file: Path, download_dir: Path) -> Path:
-    """Clone (ou met à jour) tous les dépôts GitHub listés dans url_file dans
-    download_dir via `git clone --depth 1` — premier run: clone tout; runs
-    suivants: `git pull` sur les dépôts déjà présents. Voir discover_repos.py
-    pour repérer de nouvelles sources à ajouter à url_file avant de relancer.
+    """Clones (or updates) every GitHub repo listed in url_file into
+    download_dir via `git clone --depth 1` — first run: clones everything;
+    subsequent runs: `git pull` on repos already present. See
+    discover_repos.py to find new sources to add to url_file before
+    re-running.
     """
     urls = [
         line.strip()
@@ -692,14 +693,14 @@ def run_classifier(
     use_ollama: bool = True,
     model: Optional[str] = None,
 ) -> Path:
-    """Classe tous les scripts BadUSB trouvés sous root_dir dans output_root
-    (par défaut root_dir/classified_badusb). Retourne le dossier de sortie —
-    utilisé directement par badusb_pipeline.py pour enchaîner sur l'agent
-    d'enrichissement sans dossier intermédiaire supplémentaire.
+    """Classifies every BadUSB script found under root_dir into output_root
+    (defaults to root_dir/classified_badusb). Returns the output folder —
+    used directly by badusb_pipeline.py to chain into the enrichment agent
+    without an extra intermediate folder.
 
-    use_ollama=False désactive tout appel réseau (classification 100%
-    keyword-matching, passe 2 sautée) — utile quand le modèle configuré
-    n'est pas installé localement ou pour un run rapide/déterministe.
+    use_ollama=False disables all network calls (100% keyword-matching
+    classification, pass 2 skipped) — useful when the configured model
+    isn't installed locally, or for a fast/deterministic run.
     """
     global OLLAMA_ENABLED, OLLAMA_MODEL
     OLLAMA_ENABLED = use_ollama
@@ -760,12 +761,12 @@ Examples:
     parser.add_argument(
         "--model",
         default=OLLAMA_MODEL,
-        help=f"Modèle Ollama à utiliser (défaut: {OLLAMA_MODEL})",
+        help=f"Ollama model to use (default: {OLLAMA_MODEL})",
     )
     parser.add_argument(
         "--no-ollama",
         action="store_true",
-        help="Désactive tout appel Ollama (keyword-matching uniquement, pas de passe 2)",
+        help="Disable all Ollama calls (keyword-matching only, no pass 2)",
     )
 
     args = parser.parse_args()

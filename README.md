@@ -105,8 +105,8 @@ two-step process required.
 
 A local web-based interface for the whole pipeline — no terminal needed once
 installed. Three columns: **Source** (drag & drop a folder, browse for one,
-or clone a repo by URL) → **Classé** (one click to classify) → **Prêt à
-flasher** (detects placeholders, shows a form per field — with the Discord
+or clone a repo by URL) → **Classified** (one click to classify) → **Ready
+to flash** (detects placeholders, shows a form per field — with the Discord
 webhook guide inline — and writes the enriched, ready-to-copy scripts).
 
 ```bash

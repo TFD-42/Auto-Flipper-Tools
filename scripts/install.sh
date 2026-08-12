@@ -1,16 +1,17 @@
 #!/usr/bin/env bash
-# Auto-Flipper-Tools — installateur automatisé macOS / Linux / Unix.
+# Auto-Flipper-Tools — automated installer for macOS / Linux / Unix.
 #
 # Usage:
 #   curl -fsSL https://raw.githubusercontent.com/TFD-42/Auto-Flipper-Tools/main/scripts/install.sh | bash
-#   # ou, depuis un clone local:
+#   # or, from a local clone:
 #   ./scripts/install.sh
 #
-# Ce script: détecte l'OS, vérifie Python 3.8+, crée un venv dédié dans
-# ~/.auto-flipper-tools/venv, installe le package (depuis le dépôt local si
-# présent, sinon clone le dépôt), et expose les commandes CLI via de petits
-# wrappers dans ~/.auto-flipper-tools/bin. N'installe jamais rien avec sudo.
-# Tout est auto-contenu: supprimer ~/.auto-flipper-tools désinstalle tout.
+# This script: detects the OS, checks for Python 3.8+, creates a dedicated
+# venv in ~/.auto-flipper-tools/venv, installs the package (from the local
+# repo if present, otherwise clones it), and exposes the CLI commands via
+# small wrappers in ~/.auto-flipper-tools/bin. Never installs anything with
+# sudo. Fully self-contained: removing ~/.auto-flipper-tools uninstalls
+# everything.
 set -euo pipefail
 
 REPO_URL="https://github.com/TFD-42/Auto-Flipper-Tools.git"
@@ -48,27 +49,27 @@ find_python() {
 }
 
 OS="$(detect_os)"
-log "OS détecté: $OS"
+log "Detected OS: $OS"
 
 PYTHON_BIN="$(find_python)" || {
-  warn "Python ${MIN_PY_MAJOR}.${MIN_PY_MINOR}+ introuvable."
+  warn "Python ${MIN_PY_MAJOR}.${MIN_PY_MINOR}+ not found."
   case "$OS" in
-    macos) warn "Installe-le avec: brew install python3   (Homebrew: https://brew.sh)" ;;
-    linux) warn "Installe-le avec ton gestionnaire de paquets, ex: sudo apt install python3 python3-venv" ;;
-    *)     warn "Installe Python 3.8+ depuis https://www.python.org/downloads/" ;;
+    macos) warn "Install it with: brew install python3   (Homebrew: https://brew.sh)" ;;
+    linux) warn "Install it with your package manager, e.g. sudo apt install python3 python3-venv" ;;
+    *)     warn "Install Python 3.8+ from https://www.python.org/downloads/" ;;
   esac
-  die "Installation interrompue — Python manquant."
+  die "Installation aborted — Python missing."
 }
-log "Python utilisé: $PYTHON_BIN ($("$PYTHON_BIN" --version 2>&1))"
+log "Using Python: $PYTHON_BIN ($("$PYTHON_BIN" --version 2>&1))"
 
 if ! command -v git >/dev/null 2>&1; then
-  die "git est requis mais introuvable. Installe-le puis relance ce script."
+  die "git is required but was not found. Install it, then re-run this script."
 fi
 
-# Repère un checkout local (script lancé depuis le dépôt) sinon clone.
-# ${BASH_SOURCE[0]} est absent quand le script arrive via `curl | bash` (pas
-# de fichier local, lu depuis stdin) — sous `set -u` il faut le protéger
-# avec ${BASH_SOURCE[0]:-} pour ne pas planter sur "unbound variable".
+# Detects a local checkout (script run from the repo) otherwise clones.
+# ${BASH_SOURCE[0]} is absent when the script arrives via `curl | bash` (no
+# local file, read from stdin) — under `set -u` it must be guarded with
+# ${BASH_SOURCE[0]:-} to avoid crashing on "unbound variable".
 SOURCE_PATH="${BASH_SOURCE[0]:-}"
 REPO_DIR=""
 if [ -n "$SOURCE_PATH" ]; then
@@ -76,24 +77,24 @@ if [ -n "$SOURCE_PATH" ]; then
   REPO_DIR="$(dirname "$SCRIPT_DIR")"
 fi
 if [ -n "$REPO_DIR" ] && [ -f "$REPO_DIR/pyproject.toml" ] && grep -q '^name = "auto-flipper-tools"' "$REPO_DIR/pyproject.toml" 2>/dev/null; then
-  log "Dépôt local détecté: $REPO_DIR"
+  log "Local repo detected: $REPO_DIR"
   SOURCE_DIR="$REPO_DIR"
 else
   SOURCE_DIR="$INSTALL_ROOT/src"
   if [ -d "$SOURCE_DIR/.git" ]; then
-    log "Mise à jour du dépôt existant..."
+    log "Updating the existing repo..."
     git -C "$SOURCE_DIR" pull --ff-only
   else
-    log "Clonage du dépôt dans $SOURCE_DIR..."
+    log "Cloning the repo into $SOURCE_DIR..."
     mkdir -p "$INSTALL_ROOT"
     git clone --depth 1 "$REPO_URL" "$SOURCE_DIR"
   fi
 fi
 
-log "Création du venv dans $VENV_DIR..."
+log "Creating the venv in $VENV_DIR..."
 "$PYTHON_BIN" -m venv "$VENV_DIR"
 
-log "Installation du package..."
+log "Installing the package..."
 "$VENV_DIR/bin/pip" install --upgrade -q pip
 "$VENV_DIR/bin/pip" install -q "$SOURCE_DIR"
 
@@ -107,17 +108,17 @@ EOF
   chmod +x "$wrapper"
 done
 
-log "Installé. Commandes disponibles: badusb-pipeline, badusb-classify, badusb-setup-agent, badusb-discover"
+log "Installed. Available commands: badusb-pipeline, badusb-classify, badusb-setup-agent, badusb-discover"
 case ":$PATH:" in
   *":$BIN_DIR:"*) ;;
   *)
-    warn "$BIN_DIR n'est pas dans ton PATH."
-    warn "Ajoute cette ligne à ton ~/.bashrc ou ~/.zshrc puis rouvre ton terminal:"
+    warn "$BIN_DIR is not in your PATH."
+    warn "Add this line to your ~/.bashrc or ~/.zshrc, then reopen your terminal:"
     warn "  export PATH=\"$BIN_DIR:\$PATH\""
     ;;
 esac
 
-log "Test rapide:"
+log "Quick test:"
 "$BIN_DIR/badusb-pipeline" --help | head -3 || true
 
-log "Prêt. Exemple: badusb-pipeline /chemin/vers/tes/scripts/badusb"
+log "Ready. Example: badusb-pipeline /path/to/your/badusb/scripts"

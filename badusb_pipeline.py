@@ -1,24 +1,23 @@
 #!/usr/bin/env python3
 """
-Pipeline BadUSB unifié — point d'entrée unique du projet.
+Unified BadUSB pipeline — the project's single entry point.
 
-Colle n'importe quel dossier contenant des scripts BadUSB (.txt/.duck/.ds,
-en vrac ou déjà organisés par sous-dossiers, peu importe) et ce script:
+Point this at any folder containing BadUSB scripts (.txt/.duck/.ds, loose
+or already organized into subfolders, doesn't matter) and it will:
 
-  1. Classe   (Bad_USB_Classifier/classify_badusb.py) — détection Ducky
-     Script, dédoublonnage, classification par thème (keyword + Ollama).
-  2. Enrichit (Bad_USB_Classifier/payload_setup_agent.py) — détecte les scripts qui
-     ont besoin d'une valeur (webhook Discord, IP, token...), guide la
-     création si besoin (ex: webhook Discord depuis un compte tout neuf),
-     et personnalise les scripts qui en ont besoin.
+  1. Classify (Bad_USB_Classifier/classify_badusb.py) — Ducky Script
+     detection, deduplication, classification by theme (keyword + Ollama).
+  2. Enrich   (Bad_USB_Classifier/payload_setup_agent.py) — detects scripts
+     that need a value (Discord webhook, IP, token...), guides you through
+     creating one if needed (e.g. a Discord webhook from a brand-new
+     account), and customizes the scripts that need it.
 
-Un seul dossier de sortie, propre et prêt à copier sur la carte SD du
-Flipper Zero — pas de dossier intermédiaire supplémentaire: l'étape
-d'enrichissement modifie en place les copies déjà produites par la
-classification (jamais les fichiers d'origine).
+A single, clean output folder ready to copy onto the Flipper Zero's SD
+card — no extra intermediate folder: the enrichment step modifies in place
+the copies already produced by classification (never the original files).
 
 Usage:
-  python3 badusb_pipeline.py <dossier_source> [--output DIR] [--no-ollama]
+  python3 badusb_pipeline.py <source_folder> [--output DIR] [--no-ollama]
 """
 from __future__ import annotations
 
@@ -39,32 +38,32 @@ from Bad_USB_Classifier.payload_setup_agent import (
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Classe et enrichit un dossier de scripts BadUSB en un seul passage."
+        description="Classifies and enriches a folder of BadUSB scripts in a single pass."
     )
     parser.add_argument(
         "directory",
-        help="Dossier source contenant des scripts BadUSB (n'importe quelle structure)",
+        help="Source folder containing BadUSB scripts (any structure)",
     )
     parser.add_argument(
         "--output",
         "-o",
-        help="Dossier de sortie (défaut: <dossier_source>_organized à côté)",
+        help="Output folder (default: <source_folder>_organized next to it)",
     )
     parser.add_argument(
         "--model",
         default="qwen2.5-1.5b-heretic:latest",
-        help="Modèle Ollama pour le fallback de classification/détection",
+        help="Ollama model for the classification/detection fallback",
     )
     parser.add_argument(
         "--no-ollama",
         action="store_true",
-        help="Désactive tout appel Ollama (regex/mots-clés uniquement)",
+        help="Disable all Ollama calls (regex/keyword matching only)",
     )
     args = parser.parse_args()
 
     source = Path(args.directory).expanduser().resolve()
     if not source.is_dir():
-        print(f"Erreur: {source} n'est pas un dossier valide.")
+        print(f"Error: {source} is not a valid directory.")
         return 1
 
     output = (
@@ -73,31 +72,31 @@ def main() -> int:
         else source.parent / f"{source.name}_organized"
     )
 
-    print(f"=== Étape 1/2 — Classification: {source} -> {output} ===")
+    print(f"=== Step 1/2 — Classification: {source} -> {output} ===")
     output = run_classifier(
         source, output_root=output, use_ollama=not args.no_ollama, model=args.model
     )
 
-    print(f"\n=== Étape 2/2 — Enrichissement (en place dans {output}) ===")
+    print(f"\n=== Step 2/2 — Enrichment (in place in {output}) ===")
     plan = analyze_tree(output, use_ollama=not args.no_ollama, model=args.model)
     print_summary(plan)
 
     values: dict = {}
     if plan.to_configure:
-        proceed = input("\nConfigurer ces fichiers maintenant ? [O/n] ").strip().lower()
+        proceed = input("\nConfigure these files now? [Y/n] ").strip().lower()
         if proceed != "n":
             values = collect_field_values(plan)
     else:
-        print("\nAucun fichier ne nécessite de configuration.")
+        print("\nNo file needs configuration.")
 
     report_lines = apply_and_copy(output, output, plan, values)
     report_path = output / "setup_report.md"
     report_path.write_text("\n".join(report_lines), encoding="utf-8")
 
-    print(f"\nTerminé. Dossier prêt: {output}")
-    print(f"Rapport: {report_path}")
+    print(f"\nDone. Folder ready: {output}")
+    print(f"Report: {report_path}")
     print(
-        "Il ne reste plus qu'à copier ce dossier dans badusb/ sur la carte SD du Flipper Zero."
+        "All that's left is to copy this folder into badusb/ on the Flipper Zero's SD card."
     )
     return 0
 

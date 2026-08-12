@@ -1,14 +1,14 @@
 name: Release
 
-# Déclenché par un tag de version (ex: v1.1.0). Ordre strict:
-#   1. test  — pytest + import check sur ubuntu/macos/windows (réutilise la
-#      même logique que tests.yml — si ça casse, rien d'autre ne se lance).
-#   2. build-package — sdist + wheel Python (pip install .), un seul job
-#      (pur Python, pas besoin de matrix OS).
-#   3. build-executables — binaire autonome PyInstaller par OS (matrix),
-#      ne démarre qu'après que les tests soient verts sur les 3 OS.
-#   4. publish — crée la GitHub Release et attache tous les artefacts,
-#      seulement si tout ce qui précède a réussi.
+# Triggered by a version tag (e.g. v1.1.0). Strict order:
+#   1. test  — pytest + import check on ubuntu/macos/windows (reuses the
+#      same logic as tests.yml — if it breaks, nothing else runs).
+#   2. build-package — Python sdist + wheel (pip install .), a single job
+#      (pure Python, no OS matrix needed).
+#   3. build-executables — standalone PyInstaller binary per OS (matrix),
+#      only starts once tests are green on all 3 OS.
+#   4. publish — creates the GitHub Release and attaches all artifacts,
+#      only if everything above succeeded.
 on:
   push:
     tags:

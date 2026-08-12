@@ -1,14 +1,13 @@
 """
-Wrapper de conversation Ollama avec tool-calling, utilisé pour piloter le
-choix du firmware (étape 1) et la navigation modulaire par catégorie
-(étape 2, mode 1b uniquement).
+Ollama chat wrapper with tool-calling, used by payload_setup_agent.py's
+Ollama fallback (and by classify_badusb.py's plain classification calls).
 
-Le modèle propose/explique/questionne en langage naturel, mais toute action
-sur le filesystem ou le device passe par un tool call structuré exécuté par
-du code Python déterministe (jamais du texte libre parsé à l'aveugle).
+The model proposes/explains/asks in natural language, but any action on the
+filesystem goes through a structured tool call executed by deterministic
+Python code (never blindly-parsed free text).
 
-Nécessite un modèle Ollama qui supporte le tool-calling (ex: qwen2.5,
-llama3.1, mistral-nemo — voir https://ollama.com/search?c=tools).
+Requires an Ollama model that supports tool-calling (e.g. qwen2.5,
+llama3.1, mistral-nemo — see https://ollama.com/search?c=tools).
 """
 
 from __future__ import annotations
@@ -37,8 +36,8 @@ def chat_with_tools(
     tools: Optional[list[dict]] = None,
     on_tool_call: Optional[Callable[[str, dict], str]] = None,
 ) -> tuple[str, list[dict]]:
-    """Envoie un message à Ollama, exécute les tool calls demandés via on_tool_call,
-    et retourne (réponse texte finale, historique mis à jour).
+    """Sends a message to Ollama, executes any requested tool calls via
+    on_tool_call, and returns (final text reply, updated history).
     """
     messages = list(history or [])
     if not messages:
@@ -54,8 +53,8 @@ def chat_with_tools(
         resp.raise_for_status()
     except requests.exceptions.ConnectionError as e:
         raise OllamaUnavailable(
-            "Ollama n'est pas accessible sur localhost:11434 — "
-            "installe-le depuis https://ollama.ai et lance-le (`ollama serve`)."
+            "Ollama isn't reachable on localhost:11434 — "
+            "install it from https://ollama.ai and start it (`ollama serve`)."
         ) from e
 
     data = resp.json()
@@ -69,19 +68,19 @@ def chat_with_tools(
         logger.info("Tool call: %s(%s)", fn_name, fn_args)
 
         if on_tool_call is None:
-            result = f"Erreur: aucun handler configuré pour {fn_name}"
+            result = f"Error: no handler configured for {fn_name}"
         else:
             try:
                 result = on_tool_call(fn_name, fn_args)
             except (
                 Exception
-            ) as e:  # noqa: BLE001 - on renvoie l'erreur au modèle, pas de crash
-                result = f"Erreur lors de l'exécution de {fn_name}: {e}"
+            ) as e:  # noqa: BLE001 - surface the error to the model instead of crashing
+                result = f"Error while running {fn_name}: {e}"
 
         messages.append({"role": "tool", "content": str(result)})
 
     if tool_calls:
-        # Redemande une réponse texte au modèle maintenant qu'il a les résultats des tools
+        # Ask the model for a text reply now that it has the tool results
         follow_up = requests.post(
             OLLAMA_CHAT_URL,
             json={"model": model, "messages": messages, "stream": False},

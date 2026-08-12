@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-Génère la section Markdown "Source Repositories & Credits" à partir de
-Bad_USB_Classifier/url.txt — un badge shields.io (étoiles GitHub, dynamique,
-jamais figé) par dépôt source, qui sert à la fois de crédit et de backlink
-réel vers chaque auteur.
+Generates the "Source Repositories & Credits" Markdown section from
+Bad_USB_Classifier/url.txt — one shields.io badge (GitHub stars, dynamic,
+never hardcoded) per source repo, doubling as both credit and a real
+backlink to each author.
 
-url.txt est la seule source de vérité: à chaque ajout de dépôt là-bas, relance
-ce script pour que le README reste synchronisé (voir promotion-report.md —
-c'est exactement le problème de désynchronisation que ce script résout).
+url.txt is the single source of truth: every time a repo is added there,
+re-run this script so the README stays in sync (see promotion-report.md —
+this is exactly the desync problem this script solves).
 
 Usage:
   python3 scripts/generate_credits_badges.py > credits_section.md
@@ -51,7 +51,7 @@ def badge_line(owner: str, repo: str) -> str:
 
 def main() -> int:
     if not URL_FILE.is_file():
-        print(f"Introuvable: {URL_FILE}", file=sys.stderr)
+        print(f"Not found: {URL_FILE}", file=sys.stderr)
         return 1
 
     sections = parse_sections(URL_FILE.read_text())

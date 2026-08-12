@@ -1,24 +1,24 @@
 #!/usr/bin/env python3
 """
-Découverte de nouvelles sources BadUSB — recherche GitHub + Reddit.
+Discovery of new BadUSB sources — GitHub + Reddit search.
 
-Cherche des dépôts/posts pas encore listés dans url.txt à partir d'une liste
-de requêtes ciblées (badusb, ducky script, flipper zero payloads...). N'écrit
-rien par défaut (dry-run) — affiche les nouveaux candidats trouvés. Avec
---write, les ajoute à la fin de url.txt (dédoublonnés contre l'existant) pour
-relecture avant de lancer classify_badusb.py --urls url.txt (qui clone/pull
-via git — voir download_repos_from_urls()).
+Looks for repos/posts not yet listed in url.txt from a list of targeted
+queries (badusb, ducky script, flipper zero payloads...). Writes nothing by
+default (dry-run) — just prints the new candidates found. With --write,
+appends them to the end of url.txt (deduplicated against the existing list)
+for review before running classify_badusb.py --urls url.txt (which
+clones/pulls via git — see download_repos_from_urls()).
 
-Ne clone jamais rien lui-même: la découverte et le clonage restent deux
-étapes séparées, pour qu'un humain valide la liste avant d'exécuter quoi
-que ce soit venant d'internet.
+Never clones anything itself: discovery and cloning stay two separate
+steps, so a human reviews the list before anything from the internet gets
+executed.
 
 Sources:
-  - GitHub Search API (api.github.com/search/repositories) — non authentifié,
-    donc soumis à un rate-limit bas (10 req/min). Suffisant pour un usage
-    occasionnel; ajoute un token via GITHUB_TOKEN pour un quota plus large.
-  - Reddit (www.reddit.com/search.json) — endpoint public en lecture seule,
-    on en extrait les liens github.com mentionnés dans les posts.
+  - GitHub Search API (api.github.com/search/repositories) — unauthenticated,
+    so subject to a low rate limit (10 req/min). Enough for occasional use;
+    add a token via GITHUB_TOKEN for a larger quota.
+  - Reddit (www.reddit.com/search.json) — public read-only endpoint, we
+    extract the github.com links mentioned in posts.
 """
 from __future__ import annotations
 
@@ -50,20 +50,20 @@ USER_AGENT = "Auto-Flipper-Tools-discover/1.0"
 
 def _get_json(url: str, headers: dict) -> Optional[dict]:
     if urllib.parse.urlparse(url).scheme != "https":
-        logger.warning("URL rejetée (schéma non-https): %s", url)
+        logger.warning("URL rejected (non-https scheme): %s", url)
         return None
     req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, **headers})
     try:
         with urllib.request.urlopen(
             req, timeout=20
-        ) as resp:  # nosec B310 - schéma vérifié ci-dessus
+        ) as resp:  # nosec B310 - scheme checked above
             return json.loads(resp.read().decode("utf-8"))
     except urllib.error.HTTPError as e:
-        logger.warning("HTTP %s pour %s", e.code, url)
+        logger.warning("HTTP %s for %s", e.code, url)
     except (
         Exception
-    ) as e:  # noqa: BLE001 - une source qui échoue ne doit pas bloquer les autres
-        logger.warning("Échec requête %s: %s", url, e)
+    ) as e:  # noqa: BLE001 - one failing source shouldn't block the others
+        logger.warning("Request failed %s: %s", url, e)
     return None
 
 
@@ -78,7 +78,7 @@ def search_github(queries: list[str]) -> set[str]:
             html_url = item.get("html_url")
             if html_url:
                 found.add(html_url.rstrip("/"))
-        time.sleep(6)  # reste sous la limite non-authentifiée (10 req/min)
+        time.sleep(6)  # stay under the unauthenticated limit (10 req/min)
     return found
 
 
@@ -109,56 +109,52 @@ def load_known(url_file: Path) -> set[str]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Cherche de nouveaux dépôts BadUSB sur GitHub/Reddit, absents de url.txt."
+        description="Searches GitHub/Reddit for new BadUSB repos not already in url.txt."
     )
     parser.add_argument(
         "--url-file",
         default=str(Path(__file__).parent / "url.txt"),
-        help="Fichier de sources à compléter (défaut: Bad_USB_Classifier/url.txt)",
+        help="Source file to append to (default: Bad_USB_Classifier/url.txt)",
     )
     parser.add_argument(
         "--write",
         action="store_true",
-        help="Ajoute les nouveaux candidats à la fin du fichier (sinon: affichage seul)",
+        help="Append the new candidates to the end of the file (otherwise: print only)",
     )
-    parser.add_argument(
-        "--skip-reddit", action="store_true", help="Ne cherche que sur GitHub"
-    )
+    parser.add_argument("--skip-reddit", action="store_true", help="Only search GitHub")
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
     url_file = Path(args.url_file).resolve()
     known = load_known(url_file)
-    logger.info("%d source(s) déjà connue(s) dans %s", len(known), url_file)
+    logger.info("%d known source(s) in %s", len(known), url_file)
 
-    logger.info("Recherche GitHub...")
+    logger.info("Searching GitHub...")
     candidates = search_github(GITHUB_QUERIES)
 
     if not args.skip_reddit:
-        logger.info("Recherche Reddit...")
+        logger.info("Searching Reddit...")
         candidates |= search_reddit(REDDIT_QUERIES)
 
     new = sorted(candidates - known)
     if not new:
-        print("\nAucune nouvelle source trouvée.")
+        print("\nNo new source found.")
         return 0
 
-    print(
-        f"\n{len(new)} nouvelle(s) source(s) trouvée(s) (absentes de {url_file.name}):"
-    )
+    print(f"\n{len(new)} new source(s) found (not in {url_file.name}):")
     for u in new:
         print(f"  {u}")
 
     if args.write:
         with url_file.open("a", encoding="utf-8") as f:
-            f.write(f"\n# === Découvertes automatiques ({len(new)}) ===\n")
+            f.write(f"\n# === Automatic discoveries ({len(new)}) ===\n")
             for u in new:
                 f.write(f"{u}\n")
-        print(f"\nAjoutées à {url_file}. Relis la liste avant de lancer:")
+        print(f"\nAppended to {url_file}. Review the list before running:")
         print(f"  python3 Bad_USB_Classifier/classify_badusb.py --urls {url_file}")
     else:
-        print("\n(dry-run — relance avec --write pour les ajouter à url.txt)")
+        print("\n(dry-run — re-run with --write to add them to url.txt)")
 
     return 0
 

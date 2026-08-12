@@ -1,18 +1,19 @@
 #!/usr/bin/env pwsh
 <#
 .SYNOPSIS
-  Auto-Flipper-Tools — installateur automatisé Windows.
+  Auto-Flipper-Tools — automated Windows installer.
 
 .DESCRIPTION
-  Détecte Python 3.8+, crée un venv dédié dans %USERPROFILE%\.auto-flipper-tools\venv,
-  installe le package (depuis le dépôt local si le script est lancé depuis un
-  checkout, sinon clone le dépôt), et crée des wrappers .cmd dans un dossier
-  ajouté au PATH utilisateur. N'installe jamais rien en admin/élévation.
+  Detects Python 3.8+, creates a dedicated venv in %USERPROFILE%\.auto-flipper-tools\venv,
+  installs the package (from the local repo if the script is run from a
+  checkout, otherwise clones the repo), and creates .cmd wrappers in a
+  folder added to the user PATH. Never installs anything with admin
+  elevation.
 
 .EXAMPLE
   irm https://raw.githubusercontent.com/TFD-42/Auto-Flipper-Tools/main/scripts/install.ps1 | iex
 .EXAMPLE
-  # depuis un clone local:
+  # from a local clone:
   .\scripts\install.ps1
 #>
 
@@ -45,24 +46,24 @@ function Find-Python {
     return $null
 }
 
-Log "OS détecté: windows"
+Log "Detected OS: windows"
 
 $PythonBin = Find-Python
 if (-not $PythonBin) {
-    Warn "Python $MinMajor.$MinMinor+ introuvable."
-    Warn "Installe-le depuis https://www.python.org/downloads/windows/ (coche 'Add python.exe to PATH')"
-    Warn "ou via winget: winget install Python.Python.3.12"
-    Die "Installation interrompue — Python manquant."
+    Warn "Python $MinMajor.$MinMinor+ not found."
+    Warn "Install it from https://www.python.org/downloads/windows/ (check 'Add python.exe to PATH')"
+    Warn "or via winget: winget install Python.Python.3.12"
+    Die "Installation aborted — Python missing."
 }
-Log "Python utilisé: $PythonBin ($(& $PythonBin --version 2>&1))"
+Log "Using Python: $PythonBin ($(& $PythonBin --version 2>&1))"
 
 if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
-    Die "git est requis mais introuvable. Installe-le (https://git-scm.com/download/win) puis relance ce script."
+    Die "git is required but was not found. Install it (https://git-scm.com/download/win), then re-run this script."
 }
 
-# Repère un checkout local (script lancé depuis le dépôt) sinon clone.
-# $MyInvocation.MyCommand.Path est vide quand le script arrive via
-# `irm ... | iex` (pas de fichier local) — dans ce cas on clone toujours.
+# Detects a local checkout (script run from the repo) otherwise clones.
+# $MyInvocation.MyCommand.Path is empty when the script arrives via
+# `irm ... | iex` (no local file) — in that case we always clone.
 $ScriptPath = $MyInvocation.MyCommand.Path
 $PyprojectPath = $null
 if ($ScriptPath) {
@@ -71,27 +72,27 @@ if ($ScriptPath) {
     $PyprojectPath = Join-Path $RepoDir "pyproject.toml"
 }
 if ($PyprojectPath -and (Test-Path $PyprojectPath) -and (Select-String -Path $PyprojectPath -Pattern '^name = "auto-flipper-tools"' -Quiet)) {
-    Log "Dépôt local détecté: $RepoDir"
+    Log "Local repo detected: $RepoDir"
     $SourceDir = $RepoDir
 } else {
     $SourceDir = Join-Path $InstallRoot "src"
     if (Test-Path (Join-Path $SourceDir ".git")) {
-        Log "Mise à jour du dépôt existant..."
+        Log "Updating the existing repo..."
         git -C $SourceDir pull --ff-only
     } else {
-        Log "Clonage du dépôt dans $SourceDir..."
+        Log "Cloning the repo into $SourceDir..."
         New-Item -ItemType Directory -Force -Path $InstallRoot | Out-Null
         git clone --depth 1 $RepoUrl $SourceDir
     }
 }
 
-Log "Création du venv dans $VenvDir..."
+Log "Creating the venv in $VenvDir..."
 & $PythonBin -m venv $VenvDir
 
 $VenvPip    = Join-Path $VenvDir "Scripts\pip.exe"
 $VenvPython = Join-Path $VenvDir "Scripts\python.exe"
 
-Log "Installation du package..."
+Log "Installing the package..."
 & $VenvPython -m pip install --upgrade -q pip
 & $VenvPip install -q $SourceDir
 
@@ -102,17 +103,17 @@ foreach ($cmd in @("badusb-pipeline", "badusb-classify", "badusb-setup-agent", "
     "@echo off`r`n`"$targetExe`" %*" | Set-Content -Path $wrapperPath -Encoding ASCII
 }
 
-Log "Installé. Commandes disponibles: badusb-pipeline, badusb-classify, badusb-setup-agent, badusb-discover"
+Log "Installed. Available commands: badusb-pipeline, badusb-classify, badusb-setup-agent, badusb-discover"
 
 $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
 if ($userPath -notlike "*$BinDir*") {
     [Environment]::SetEnvironmentVariable("Path", "$userPath;$BinDir", "User")
-    Warn "$BinDir ajouté à ton PATH utilisateur — ouvre un NOUVEAU terminal pour que ça prenne effet."
+    Warn "$BinDir added to your user PATH — open a NEW terminal for it to take effect."
 } else {
-    Log "$BinDir est déjà dans le PATH."
+    Log "$BinDir is already in the PATH."
 }
 
-Log "Test rapide:"
+Log "Quick test:"
 & (Join-Path $BinDir "badusb-pipeline.cmd") --help | Select-Object -First 3
 
-Log "Prêt. Exemple: badusb-pipeline C:\chemin\vers\tes\scripts\badusb"
+Log "Ready. Example: badusb-pipeline C:\path\to\your\badusb\scripts"

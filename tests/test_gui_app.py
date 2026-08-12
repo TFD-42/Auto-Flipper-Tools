@@ -62,7 +62,7 @@ def test_upload_rejects_path_traversal(client):
     }
     resp = client.post("/api/upload", data=data, content_type="multipart/form-data")
     assert resp.status_code == 400
-    assert "invalide" in resp.get_json()["error"]
+    assert "Invalid" in resp.get_json()["error"]
     assert not (gui_app.WORKSPACE.parent.parent / "evil.txt").exists()
 
 
