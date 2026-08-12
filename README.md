@@ -11,11 +11,11 @@
 
 ## Overview
 
-<img width="1680" height="720" alt="github_banner_42" src="https://github.com/user-attachments/assets/682f0c0e-cedb-451e-bc45-1c0158a8fccf" />
+![Capture d’écran 2026-08-11 à 19 19 12](https://github.com/user-attachments/assets/8ee29e95-57dd-4322-b0f2-985b65caf7b9)
+
 
 Bad_Usb_Forge is a Flipper Zero BadUSB payload pipeline for security professionals, researchers, and enthusiasts. Its core job: take a messy folder of BadUSB/Ducky Script payloads — your own, or pulled from any of the ~90 community source repos it already knows about — classify every script by theme, then fill in **all** of them in a single pass (Discord webhook, attacker IP, Telegram token, and other placeholders each payload needs before it'll actually run), and build a clean, ready-to-flash output folder you copy-paste directly onto the Flipper Zero's SD card. No manual per-script editing, no juggling a dozen half-configured BadUSB payloads by hand.
 
-![Capture d’écran 2026-08-11 à 19 19 12](https://github.com/user-attachments/assets/8ee29e95-57dd-4322-b0f2-985b65caf7b9)
 
 ### Key Use Cases
 
@@ -245,6 +245,8 @@ No evidence of this codebase being forked from or reusing another project's
 source code was found (checked git remotes, commit history, and license
 headers) — the classifier/enrichment/discovery tools here are original
 implementations.
+
+<img width="1680" height="720" alt="github_banner_42" src="https://github.com/user-attachments/assets/682f0c0e-cedb-451e-bc45-1c0158a8fccf" />
 
 ### Related Projects
 
