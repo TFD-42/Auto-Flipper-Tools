@@ -14,6 +14,7 @@ discovery, Ollama).
 """
 from __future__ import annotations
 
+import logging
 import shutil
 import sys
 import webbrowser
@@ -27,6 +28,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from Bad_USB_Classifier import payload_setup_agent as psa
 from Bad_USB_Classifier.classify_badusb import download_repos_from_urls, run_classifier
+
+logger = logging.getLogger(__name__)
 
 APP_DIR = Path(__file__).resolve().parent
 DEFAULT_URL_FILE = APP_DIR.parent / "Bad_USB_Classifier" / "url.txt"
@@ -184,8 +187,17 @@ def api_clone_list():
         download_repos_from_urls(url_file, SOURCE_DIR)
     except (
         Exception
-    ) as e:  # noqa: BLE001 - surface the error instead of crashing the server
-        return jsonify({"error": str(e)[:500]}), 500
+    ):  # noqa: BLE001 - log the real error, don't leak internals to the client
+        logger.exception("clone-list failed for %s", source_label)
+        return (
+            jsonify(
+                {
+                    "error": "Failed to clone/pull one or more repositories — "
+                    "check the URL list and server logs for details"
+                }
+            ),
+            500,
+        )
     finally:
         if uploaded:
             url_file.unlink(missing_ok=True)
@@ -215,8 +227,9 @@ def api_upload():
     for f, relpath in zip(files, relpaths):
         try:
             dest = _safe_join(SOURCE_DIR, relpath)
-        except ValueError as e:
-            return jsonify({"error": str(e)}), 400
+        except ValueError:
+            logger.warning("Rejected path-traversal attempt: %r", relpath)
+            return jsonify({"error": "Invalid path (outside workspace)"}), 400
         dest.parent.mkdir(parents=True, exist_ok=True)
         f.save(str(dest))
         written += 1
@@ -359,9 +372,7 @@ def api_reset():
 def main() -> int:
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description="Bad_Usb_Forge — local desktop GUI"
-    )
+    parser = argparse.ArgumentParser(description="Bad_Usb_Forge — local desktop GUI")
     parser.add_argument("--port", type=int, default=5115)
     parser.add_argument(
         "--no-browser",
