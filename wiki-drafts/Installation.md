@@ -5,13 +5,13 @@
 ### macOS / Linux / Unix
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/TFD-42/Auto-Flipper-Tools/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/TFD-42/BK_Flipper_Full_Pipline/main/scripts/install.sh | bash
 ```
 
 ### Windows (PowerShell)
 
 ```powershell
-irm https://raw.githubusercontent.com/TFD-42/Auto-Flipper-Tools/main/scripts/install.ps1 | iex
+irm https://raw.githubusercontent.com/TFD-42/BK_Flipper_Full_Pipline/main/scripts/install.ps1 | iex
 ```
 
 Both scripts:
@@ -20,11 +20,11 @@ Both scripts:
 - install the package and add `badusb-pipeline`, `badusb-classify`, `badusb-setup-agent`, `badusb-discover` to your PATH
 - **never** use `sudo`/admin rights
 
-They're validated on every push by CI across ubuntu/macos/windows (see the `Install script` job in [tests.yml](https://github.com/TFD-42/Auto-Flipper-Tools/blob/main/.github/workflows/tests.yml)).
+They're validated on every push by CI across ubuntu/macos/windows (see the `Install script` job in [tests.yml](https://github.com/TFD-42/BK_Flipper_Full_Pipline/blob/main/.github/workflows/tests.yml)).
 
 ## Standalone executables (no Python required)
 
-Download the executable for your OS from the [latest release](https://github.com/TFD-42/Auto-Flipper-Tools/releases/latest):
+Download the executable for your OS from the [latest release](https://github.com/TFD-42/BK_Flipper_Full_Pipline/releases/latest):
 
 - `badusb-pipeline-linux`
 - `badusb-pipeline-macos`
@@ -35,8 +35,8 @@ These are built by the release pipeline with PyInstaller and cover the unified `
 ## Manual install from source
 
 ```bash
-git clone https://github.com/TFD-42/Auto-Flipper-Tools.git
-cd Auto-Flipper-Tools
+git clone https://github.com/TFD-42/BK_Flipper_Full_Pipline.git
+cd BK_Flipper_Full_Pipline
 python -m venv venv
 source venv/bin/activate   # Windows: venv\Scripts\activate
 pip install -e .

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Auto-Flipper-Tools GUI — local 3-column web interface.
+BK_Flipper_Full_Pipline GUI — local 3-column web interface.
 
 Column 1 (source)    : drop a folder, or clone a repo by URL.
 Column 2 (organized) : classification result (theme by theme).
@@ -360,7 +360,7 @@ def main() -> int:
     import argparse
 
     parser = argparse.ArgumentParser(
-        description="Auto-Flipper-Tools — local desktop GUI"
+        description="BK_Flipper_Full_Pipline — local desktop GUI"
     )
     parser.add_argument("--port", type=int, default=5115)
     parser.add_argument(

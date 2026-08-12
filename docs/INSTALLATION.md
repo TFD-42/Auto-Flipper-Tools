@@ -1,6 +1,6 @@
 # Installation Guide
 
-Complete setup instructions for Auto-Flipper-Tools.
+Complete setup instructions for BK_Flipper_Full_Pipline.
 
 ## System Requirements
 
@@ -12,8 +12,8 @@ Complete setup instructions for Auto-Flipper-Tools.
 ## Step 1: Clone Repository
 
 ```bash
-git clone https://github.com/TFD-42/Auto-Flipper-Tools.git
-cd Auto-Flipper-Tools
+git clone https://github.com/TFD-42/BK_Flipper_Full_Pipline.git
+cd BK_Flipper_Full_Pipline
 ```
 
 ## Step 2: Create Virtual Environment (Recommended)

@@ -1,4 +1,4 @@
-# Promotion & Production-Readiness Report — Auto-Flipper-Tools
+# Promotion & Production-Readiness Report — BK_Flipper_Full_Pipline
 
 *Second pass, run with `+ wiki full`. Builds on the previous audit (still valid, see git history of this file); this update covers what changed since (the GUI, more tests/CI) and delivers full wiki content.*
 
@@ -28,7 +28,7 @@ Content attribution (third-party payloads processed) is still handled correctly 
 
 ## 3. SEO — a live-data finding you should know about
 
-**Your GitHub topics currently include two entries that don't look intentional**: `automated` and `badini`, alongside the 12 solid ones from last pass. Neither was set by this tool (nothing in this session ran `gh repo edit`). `badini` in particular reads like a typo — possibly meant to be `badusb`-adjacent, or a duplicate/mis-paste. Worth checking `https://github.com/TFD-42/Auto-Flipper-Tools` → Settings → Topics and removing it if it wasn't intentional.
+**Your GitHub topics currently include two entries that don't look intentional**: `automated` and `badini`, alongside the 12 solid ones from last pass. Neither was set by this tool (nothing in this session ran `gh repo edit`). `badini` in particular reads like a typo — possibly meant to be `badusb`-adjacent, or a duplicate/mis-paste. Worth checking `https://github.com/TFD-42/BK_Flipper_Full_Pipline` → Settings → Topics and removing it if it wasn't intentional.
 
 Suggested topic additions from last pass (`ollama`, `cli`, `cross-platform`) are still worth adding — the GUI addition this session makes `cli` slightly less exclusively true (there's now a real GUI too), so consider `desktop-gui` or `flask` as an alternative/addition if you want the GUI to be discoverable by its own keywords.
 
@@ -40,7 +40,7 @@ Description is unchanged and still accurate — no update needed.
 
 ## 5. Wiki — full content, drafted in `wiki-drafts/`
 
-GitHub Wikis are a **separate git repository** (`https://github.com/TFD-42/Auto-Flipper-Tools.wiki.git`) — these can't be pushed as part of a normal PR to the main repo. 8 ready-to-paste pages:
+GitHub Wikis are a **separate git repository** (`https://github.com/TFD-42/BK_Flipper_Full_Pipline.wiki.git`) — these can't be pushed as part of a normal PR to the main repo. 8 ready-to-paste pages:
 
 | Page | Covers |
 |---|---|
@@ -56,7 +56,7 @@ GitHub Wikis are a **separate git repository** (`https://github.com/TFD-42/Auto-
 **To publish**: clone the wiki repo separately and copy these files in (renaming to match — GitHub wiki page URLs are derived from filename, so `Usage-CLI.md` becomes the `Usage-CLI` page, matching the links already used throughout these drafts):
 
 ```bash
-git clone https://github.com/TFD-42/Auto-Flipper-Tools.wiki.git /tmp/afl-wiki
+git clone https://github.com/TFD-42/BK_Flipper_Full_Pipline.wiki.git /tmp/afl-wiki
 cp wiki-drafts/*.md /tmp/afl-wiki/
 cd /tmp/afl-wiki && git add -A && git commit -m "Add full wiki content" && git push
 ```

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Auto-Flipper-Tools — automated installer for macOS / Linux / Unix.
+# BK_Flipper_Full_Pipline — automated installer for macOS / Linux / Unix.
 #
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/TFD-42/Auto-Flipper-Tools/main/scripts/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/TFD-42/BK_Flipper_Full_Pipline/main/scripts/install.sh | bash
 #   # or, from a local clone:
 #   ./scripts/install.sh
 #
@@ -14,7 +14,7 @@
 # everything.
 set -euo pipefail
 
-REPO_URL="https://github.com/TFD-42/Auto-Flipper-Tools.git"
+REPO_URL="https://github.com/TFD-42/BK_Flipper_Full_Pipline.git"
 INSTALL_ROOT="${AUTO_FLIPPER_HOME:-$HOME/.auto-flipper-tools}"
 VENV_DIR="$INSTALL_ROOT/venv"
 BIN_DIR="$INSTALL_ROOT/bin"

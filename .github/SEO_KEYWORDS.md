@@ -43,7 +43,7 @@
 - "Payload automation"
 
 ### Navigational (Finding)
-- "Auto-Flipper-Tools GitHub"
+- "BK_Flipper_Full_Pipline GitHub"
 - "BadUSB classification tool"
 - "Flipper automation suite"
 
@@ -65,7 +65,7 @@ python-tools, open-source, security-automation
 ## README Optimization
 
 ### Title
-✅ **Auto-Flipper-Tools** - Automated BadUSB Classifier & Flipper Zero Toolkit
+✅ **BK_Flipper_Full_Pipline** - Automated BadUSB Classifier & Flipper Zero Toolkit
 
 ### Tagline
 > Intelligent automation for BadUSB payload classification, analysis, and organization
@@ -78,7 +78,7 @@ python-tools, open-source, security-automation
 ## Discoverability Channels
 
 ### 1. GitHub Search
-- Repository name: Auto-Flipper-Tools
+- Repository name: BK_Flipper_Full_Pipline
 - Description: Automated BadUSB classifier and Flipper Zero toolkit
 - Topics: badusb, flipper-zero, automation
 - Languages: Python

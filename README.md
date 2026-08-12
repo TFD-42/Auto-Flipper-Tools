@@ -1,11 +1,11 @@
-# Auto-Flipper-Tools
+# BK_Flipper_Full_Pipline
 
-> Classify and enrich BadUSB/Ducky Script payloads for Flipper Zero — one command, any source folder, local-first with optional AI
+> The Flipper Zero BadUSB payload pipeline: classify, fill in every script's placeholders in one pass, and build a ready-to-flash folder you can copy straight onto your Flipper Zero's SD card — one command, any source folder, local-first with optional AI
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
-[![Tests](https://github.com/TFD-42/Auto-Flipper-Tools/actions/workflows/tests.yml/badge.svg)](https://github.com/TFD-42/Auto-Flipper-Tools/actions/workflows/tests.yml)
-[![Security Scan](https://github.com/TFD-42/Auto-Flipper-Tools/actions/workflows/security-scan.yml/badge.svg)](https://github.com/TFD-42/Auto-Flipper-Tools/actions/workflows/security-scan.yml)
+[![Tests](https://github.com/TFD-42/BK_Flipper_Full_Pipline/actions/workflows/tests.yml/badge.svg)](https://github.com/TFD-42/BK_Flipper_Full_Pipline/actions/workflows/tests.yml)
+[![Security Scan](https://github.com/TFD-42/BK_Flipper_Full_Pipline/actions/workflows/security-scan.yml/badge.svg)](https://github.com/TFD-42/BK_Flipper_Full_Pipline/actions/workflows/security-scan.yml)
 [![Cross-Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey.svg)](#quick-start)
 [![Local-first](https://img.shields.io/badge/AI-optional%20%26%20local%20(Ollama)-informational.svg)](#dependencies)
 
@@ -13,7 +13,7 @@
 
 <img width="1680" height="720" alt="github_banner_42" src="https://github.com/user-attachments/assets/682f0c0e-cedb-451e-bc45-1c0158a8fccf" />
 
-Auto-Flipper-Tools is an automation toolkit for security professionals, researchers, and enthusiasts working with Flipper Zero devices. Its core job: take a messy folder of BadUSB/Ducky Script payloads — your own, or pulled from any of the ~90 community source repos it already knows about — and turn it into a clean, categorized, ready-to-flash folder, filling in the placeholders (Discord webhook, attacker IP, Telegram token...) that individual scripts need before they'll actually work.
+BK_Flipper_Full_Pipline is a Flipper Zero BadUSB payload pipeline for security professionals, researchers, and enthusiasts. Its core job: take a messy folder of BadUSB/Ducky Script payloads — your own, or pulled from any of the ~90 community source repos it already knows about — classify every script by theme, then fill in **all** of them in a single pass (Discord webhook, attacker IP, Telegram token, and other placeholders each payload needs before it'll actually run), and build a clean, ready-to-flash output folder you copy-paste directly onto the Flipper Zero's SD card. No manual per-script editing, no juggling a dozen half-configured BadUSB payloads by hand.
 
 ![Capture d’écran 2026-08-11 à 19 19 12](https://github.com/user-attachments/assets/8ee29e95-57dd-4322-b0f2-985b65caf7b9)
 
@@ -30,13 +30,13 @@ Auto-Flipper-Tools is an automation toolkit for security professionals, research
 ### Automated Install (macOS / Linux / Unix)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/TFD-42/Auto-Flipper-Tools/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/TFD-42/BK_Flipper_Full_Pipline/main/scripts/install.sh | bash
 ```
 
 ### Automated Install (Windows, PowerShell)
 
 ```powershell
-irm https://raw.githubusercontent.com/TFD-42/Auto-Flipper-Tools/main/scripts/install.ps1 | iex
+irm https://raw.githubusercontent.com/TFD-42/BK_Flipper_Full_Pipline/main/scripts/install.ps1 | iex
 ```
 
 Both scripts detect your OS, verify Python 3.8+, create an isolated venv
@@ -47,14 +47,14 @@ to your PATH. Nothing is installed with `sudo`/admin rights.
 ### Standalone Executables (no Python required)
 
 Download the executable for your OS from the
-[latest release](https://github.com/TFD-42/Auto-Flipper-Tools/releases/latest):
+[latest release](https://github.com/TFD-42/BK_Flipper_Full_Pipline/releases/latest):
 `badusb-pipeline-linux`, `badusb-pipeline-macos`, or `badusb-pipeline-windows.exe`.
 
 ### Manual Install (from source)
 
 ```bash
-git clone https://github.com/TFD-42/Auto-Flipper-Tools.git
-cd Auto-Flipper-Tools
+git clone https://github.com/TFD-42/BK_Flipper_Full_Pipline.git
+cd BK_Flipper_Full_Pipline
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -e .
@@ -136,7 +136,7 @@ the discover step, or Ollama).
 ## Directory Structure
 
 ```
-Auto-Flipper-Tools/
+BK_Flipper_Full_Pipline/
 ├── badusb_pipeline.py          # unified entry point: classify + enrich
 ├── pyproject.toml              # pip-installable package (console_scripts)
 ├── Bad_USB_Classifier/
@@ -199,8 +199,8 @@ Contributions are welcome and encouraged! Whether you're fixing bugs, adding fea
 ### Development Setup
 
 ```bash
-git clone https://github.com/TFD-42/Auto-Flipper-Tools.git
-cd Auto-Flipper-Tools
+git clone https://github.com/TFD-42/BK_Flipper_Full_Pipline.git
+cd BK_Flipper_Full_Pipline
 python -m venv venv
 source venv/bin/activate
 

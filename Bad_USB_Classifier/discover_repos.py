@@ -45,7 +45,7 @@ GITHUB_QUERIES = [
 REDDIT_QUERIES = ["flipper zero badusb payload", "badusb ducky script github"]
 
 GITHUB_REPO_RE = re.compile(r"https://github\.com/[\w.-]+/[\w.-]+")
-USER_AGENT = "Auto-Flipper-Tools-discover/1.0"
+USER_AGENT = "BK_Flipper_Full_Pipline-discover/1.0"
 
 
 def _get_json(url: str, headers: dict) -> Optional[dict]:

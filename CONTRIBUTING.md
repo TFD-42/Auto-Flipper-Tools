@@ -1,4 +1,4 @@
-# Contributing to Auto-Flipper-Tools
+# Contributing to BK_Flipper_Full_Pipline
 
 Thank you for your interest in contributing! We welcome contributions from developers, security researchers, and enthusiasts at all skill levels.
 
@@ -44,8 +44,8 @@ See also [ETHICS.md](ETHICS.md) for the project's full ethics statement.
 
 ```bash
 # Clone your fork
-git clone https://github.com/TFD-42/Auto-Flipper-Tools.git
-cd Auto-Flipper-Tools
+git clone https://github.com/TFD-42/BK_Flipper_Full_Pipline.git
+cd BK_Flipper_Full_Pipline
 
 # Create virtual environment
 python -m venv venv
@@ -274,4 +274,4 @@ By contributing, you agree that your contributions will be licensed under the MI
 
 ---
 
-Thank you for helping make Auto-Flipper-Tools better! 🎉
+Thank you for helping make BK_Flipper_Full_Pipline better! 🎉

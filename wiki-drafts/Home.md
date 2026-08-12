@@ -1,4 +1,4 @@
-# Auto-Flipper-Tools Wiki
+# BK_Flipper_Full_Pipline Wiki
 
 Classify and enrich BadUSB/Ducky Script payloads for Flipper Zero — one command or one click, any source folder, local-first with optional AI.
 
@@ -27,11 +27,11 @@ Three tools, usable standalone or chained together:
 
 ## Project links
 
-- [Main README](https://github.com/TFD-42/Auto-Flipper-Tools#readme)
-- [Issues](https://github.com/TFD-42/Auto-Flipper-Tools/issues)
-- [Releases](https://github.com/TFD-42/Auto-Flipper-Tools/releases)
-- [CI status](https://github.com/TFD-42/Auto-Flipper-Tools/actions)
+- [Main README](https://github.com/TFD-42/BK_Flipper_Full_Pipline#readme)
+- [Issues](https://github.com/TFD-42/BK_Flipper_Full_Pipline/issues)
+- [Releases](https://github.com/TFD-42/BK_Flipper_Full_Pipline/releases)
+- [CI status](https://github.com/TFD-42/BK_Flipper_Full_Pipline/actions)
 
 ## Scope note
 
-This project is for **authorized security testing and research only**. It classifies and organizes third-party community payloads — it does not claim authorship of any payload it processes. See [Source Repositories & Credits](Source-Repositories) and [ETHICS.md](https://github.com/TFD-42/Auto-Flipper-Tools/blob/main/ETHICS.md).
+This project is for **authorized security testing and research only**. It classifies and organizes third-party community payloads — it does not claim authorship of any payload it processes. See [Source Repositories & Credits](Source-Repositories) and [ETHICS.md](https://github.com/TFD-42/BK_Flipper_Full_Pipline/blob/main/ETHICS.md).

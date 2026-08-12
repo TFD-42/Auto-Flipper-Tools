@@ -1,6 +1,6 @@
 # Architecture & Design
 
-Technical overview of Auto-Flipper-Tools architecture.
+Technical overview of BK_Flipper_Full_Pipline architecture.
 
 ## System Design
 
@@ -197,7 +197,7 @@ BadUSB Payloads
 ### Directory Layout
 
 ```
-Auto-Flipper-Tools/
+BK_Flipper_Full_Pipline/
 ├── .github/
 │   └── workflows/           # CI/CD pipelines
 │       ├── security-scan.yml

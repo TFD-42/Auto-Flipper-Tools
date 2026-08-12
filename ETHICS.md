@@ -1,7 +1,7 @@
-# Ethics & Legal Usage Statement – Auto-Flipper-Tools
+# Ethics & Legal Usage Statement – BK_Flipper_Full_Pipline
 **Version**: 1.0  
 **Last Updated**: 2026-06-15  
-**Applies to**: Auto-Flipper-Tools (BadUSB classifier, Flipper Zero automation, Ducky Script analysis)  
+**Applies to**: BK_Flipper_Full_Pipline (BadUSB classifier, Flipper Zero automation, Ducky Script analysis)  
 **Binding**: Use of this project constitutes acceptance of all terms below.
 
 ## 1. Legitimate Use
