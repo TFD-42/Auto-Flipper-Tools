@@ -133,7 +133,16 @@ def api_clone():
         timeout=180,
     )
     if result.returncode != 0:
-        return jsonify({"error": result.stderr.strip()[:500]}), 500
+        logger.warning("git clone failed for %s: %s", url, result.stderr.strip())
+        return (
+            jsonify(
+                {
+                    "error": "Clone failed — check the URL points to a public "
+                    "repository and that it isn't already cloned"
+                }
+            ),
+            500,
+        )
     return jsonify({"ok": True, "tree": _tree(SOURCE_DIR)})
 
 
